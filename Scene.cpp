@@ -608,6 +608,22 @@ void Scene::readMeshes(const char*& str, XMLError& eResult, XMLElement*& pElemen
 			shadingMode = SmoothShading;
 		objElement = pObject->FirstChildElement("Material");
 		eResult = objElement->QueryIntText(&matIndex);
+
+
+		int text1 = -1, text2 = -1;
+		objElement = pObject->FirstChildElement("Textures");
+		if (objElement != nullptr)
+		{
+			str = objElement->GetText();
+
+			sscanf(str, "%d %d", &text1, &text2);
+			text1--;
+			if (text2 != -1)
+			{
+				text2--;
+			}
+
+		}
 		
 		objElement = pObject->FirstChildElement("MotionBlur");
 		if(objElement!= nullptr)
@@ -646,8 +662,8 @@ void Scene::readMeshes(const char*& str, XMLError& eResult, XMLElement*& pElemen
 					p2Index = indices[1] + currID + 1;
 					p3Index = indices[2] + currID + 1;
 					int p4Index = indices[3] + currID + 1;
-					faces.push_back((new Triangle(id, matIndex - 1, material, p1Index, p2Index, p3Index, &vertices, TriangleShape, transformList, motionBlur,shadingMode)));
-					faces.push_back((new Triangle(id, matIndex - 1, material, p3Index, p4Index, p1Index, &vertices, TriangleShape, transformList, motionBlur,shadingMode)));
+					faces.push_back((new Triangle(id, matIndex - 1,text1,text2, material, p1Index, p2Index, p3Index, &vertices, TriangleShape, transformList, motionBlur,shadingMode)));
+					faces.push_back((new Triangle(id, matIndex - 1,text1,text2, material, p3Index, p4Index, p1Index, &vertices, TriangleShape, transformList, motionBlur,shadingMode)));
 					meshIndices->push_back(p1Index);
 					meshIndices->push_back(p2Index);
 					meshIndices->push_back(p3Index);
@@ -659,14 +675,14 @@ void Scene::readMeshes(const char*& str, XMLError& eResult, XMLElement*& pElemen
 					p2Index = indices[1] + currID + 1;
 					p3Index = indices[2] + currID + 1;
 
-					faces.push_back((new Triangle(id, matIndex - 1, material, p1Index, p2Index, p3Index, &vertices, TriangleShape, transformList, motionBlur,shadingMode)));
+					faces.push_back((new Triangle(id, matIndex - 1,text1,text2, material, p1Index, p2Index, p3Index, &vertices, TriangleShape, transformList, motionBlur,shadingMode)));
 					meshIndices->push_back(p1Index);
 					meshIndices->push_back(p2Index);
 					meshIndices->push_back(p3Index);
 				}
 				
 			}
-			objects.push_back(new Mesh(idCount++, matIndex - 1, material, faces, meshIndices, &vertices, MeshType, transformList,motionBlur,shadingMode));
+			objects.push_back(new Mesh(idCount++, matIndex - 1,text1,text2, material, faces, meshIndices, &vertices, MeshType, transformList,motionBlur,shadingMode));
 		}
 		else
 		{
@@ -692,14 +708,14 @@ void Scene::readMeshes(const char*& str, XMLError& eResult, XMLElement*& pElemen
 				}
 
 				Material* material = materials[matIndex - 1];
-				faces.push_back((new Triangle(id, matIndex - 1, material, p1Index, p2Index, p3Index, &vertices, TriangleShape, transformList,motionBlur,shadingMode)));
+				faces.push_back((new Triangle(id, matIndex - 1,text1,text2, material, p1Index, p2Index, p3Index, &vertices, TriangleShape, transformList,motionBlur,shadingMode)));
 				meshIndices->push_back(p1Index);
 				meshIndices->push_back(p2Index);
 				meshIndices->push_back(p3Index);
 			}
 
 			Material* material = materials[matIndex - 1];
-			objects.push_back(new Mesh(idCount++, matIndex - 1, material, faces, meshIndices, &vertices, MeshType, transformList,motionBlur,shadingMode));
+			objects.push_back(new Mesh(idCount++, matIndex - 1,text1,text2, material, faces, meshIndices, &vertices, MeshType, transformList,motionBlur,shadingMode));
 			
 
 		}
@@ -731,6 +747,22 @@ void Scene::readSpheres(const char*& str, XMLError& eResult, XMLElement*& pEleme
 		
 		objElement = pObject->FirstChildElement("Material");
 		eResult = objElement->QueryIntText(&matIndex);
+
+		int text1 = -1, text2 = -1;
+		objElement = pObject->FirstChildElement("Textures");
+		if (objElement != nullptr)
+		{
+			str = objElement->GetText();
+
+			sscanf(str, "%d %d", &text1, &text2);
+			text1--;
+			if (text2!= -1)
+			{
+				text2--;
+			}
+
+		}
+		
 		objElement = pObject->FirstChildElement("MotionBlur");
 		if (objElement != nullptr)
 		{
@@ -770,7 +802,7 @@ void Scene::readSpheres(const char*& str, XMLError& eResult, XMLElement*& pEleme
 		objElement = pObject->FirstChildElement("Radius");
 		eResult = objElement->QueryFloatText(&R);
 		Material* material = materials[matIndex - 1];
-		objects.push_back(new Sphere(idCount++, matIndex - 1, material, cIndex, R, &vertices, SphereType, transformList,motionBlur,shadingMode));
+		objects.push_back(new Sphere(idCount++, matIndex - 1,text1,text2, material, cIndex, R, &vertices, SphereType, transformList,motionBlur,shadingMode));
 
 		pObject = pObject->NextSiblingElement("Sphere");
 	}
@@ -797,6 +829,22 @@ void Scene::readTriangles(const char*& str, XMLError& eResult, XMLElement*& pEle
 			shadingMode = SmoothShading;
 		objElement = pObject->FirstChildElement("Material");
 		eResult = objElement->QueryIntText(&matIndex);
+
+
+		int text1 = -1, text2 = -1;
+		objElement = pObject->FirstChildElement("Textures");
+		if (objElement != nullptr)
+		{
+			str = objElement->GetText();
+
+			sscanf(str, "%d %d", &text1, &text2);
+			text1--;
+			if (text2 != -1)
+			{
+				text2--;
+			}
+
+		}
 		objElement = pObject->FirstChildElement("MotionBlur");
 		if (objElement != nullptr)
 		{
@@ -834,7 +882,7 @@ void Scene::readTriangles(const char*& str, XMLError& eResult, XMLElement*& pEle
 		str = objElement->GetText();
 		sscanf(str, "%d %d %d", &p1Index, &p2Index, &p3Index);
 		Material* material = materials[matIndex - 1];
-		objects.push_back(new Triangle(idCount++, matIndex - 1, material, p1Index, p2Index, p3Index, &vertices, TriangleShape, transformList,motionBlur,shadingMode));
+		objects.push_back(new Triangle(idCount++, matIndex - 1,text1,text2, material, p1Index, p2Index, p3Index, &vertices, TriangleShape, transformList,motionBlur,shadingMode));
 
 		pObject = pObject->NextSiblingElement("Triangle");
 	}
@@ -862,6 +910,21 @@ void Scene::readInstances(const char*& str, XMLError& eResult, XMLElement*& pEle
 		eResult = pObject->QueryBoolAttribute("resetTransform", &resetTransform);
 		objElement = pObject->FirstChildElement("Material");
 		eResult = objElement->QueryIntText(&matIndex);
+
+		int text1 = -1, text2 = -1;
+		objElement = pObject->FirstChildElement("Textures");
+		if (objElement != nullptr)
+		{
+			str = objElement->GetText();
+
+			sscanf(str, "%d %d", &text1, &text2);
+			text1--;
+			if (text2 != -1)
+			{
+				text2--;
+			}
+
+		}
 		objElement = pObject->FirstChildElement("MotionBlur");
 		if (objElement != nullptr)
 		{
@@ -887,11 +950,11 @@ void Scene::readInstances(const char*& str, XMLError& eResult, XMLElement*& pEle
 			{
 				newtransformList.push_back(element);
 			}
-			objects.push_back(new Mesh(idCount++, matIndex - 1, material, targetMesh->faces, nullptr,
+			objects.push_back(new Mesh(idCount++, matIndex - 1,text1,text2, material, targetMesh->faces, nullptr,
 				&vertices, MeshType, newtransformList, motionBlur,shadingMode));
 		}
 		else
-			objects.push_back(new Mesh(idCount++, matIndex - 1, material, targetMesh->faces, nullptr,
+			objects.push_back(new Mesh(idCount++, matIndex - 1,text1,text2, material, targetMesh->faces, nullptr,
 				&vertices, MeshType, transformList, motionBlur,shadingMode));
 		pObject = pObject->NextSiblingElement("MeshInstance");
 	
@@ -971,8 +1034,117 @@ void Scene::readTextureXml(const char*& str, XMLError& eResult, XMLElement*& pEl
 			readTexture(str,id-1);
 			image = image->NextSiblingElement("Image");
 		}
+
+		XMLElement* maps = pElement->FirstChildElement("TextureMap");
+		XMLElement* mapElement;
+		while (maps != nullptr)
+		{
+			int id;
+			int imageID;
+			TextureType textureType = StandardTexture;
+			InterpolationType interpolationType = Bilinear;
+			DecalMode decalMode = ReplaceKD;
+			NoiseConversion noiseConversion = Absval;
+			float bumpFactor = 0;
+			int normalizer= 0;
+			float noiseScale = 0;
+			eResult = maps->QueryIntAttribute("id", &id);
+			const char* type = maps->Attribute("type");
+			
+			if (type[0] == 'i')
+			{
+				textureType = StandardTexture;
+			}
+			else
+			{
+				textureType = Perlin;
+			}
+			mapElement = maps->FirstChildElement("ImageId");
+			str = mapElement->GetText();
+			sscanf(str, "%d", &imageID);
+		
+
+			
+			mapElement = maps->FirstChildElement("Interpolation");
+			
+			if(mapElement != nullptr)
+			{
+				str = mapElement->GetText();
+				if (str[0] == 'b')
+				{
+					interpolationType = Bilinear;
+				}
+				else
+				{
+					interpolationType = Nearest;
+				}
+			}
+
+			mapElement = maps->FirstChildElement("DecalMode");
+			
+			if (mapElement != nullptr)
+			{
+				str = mapElement->GetText();
+				if (str[0] == 'r' && str[8] == 'k')
+				{
+					decalMode = ReplaceKD;
+				}
+				else if (str[0] == 'r' && str[8] == 'n')
+				{
+					decalMode = ReplaceNormal;
+				}
+				else if (str[0] == 'r' && str[8] == 'a')
+				{
+					decalMode = ReplaceALL;
+				}
+				else if (str[0] == 'b' && str[1] == 'l')
+				{
+					decalMode = BlendKD;
+				}
+				else if (str[0] == 'b' && str[1] == 'u')
+				{
+					decalMode = BumpNormal;
+					mapElement = maps->FirstChildElement("BumpFactor");
+					str = mapElement->GetText();
+					sscanf(str, "%f",&bumpFactor);
+				}
+				else if (str[0] == 'r' && str[8] == 'b')
+				{
+					decalMode = ReplaceBG;
+				}
+			}
+			mapElement = maps->FirstChildElement("Normalizer");
+			if(mapElement != nullptr)
+			{
+				str = mapElement->GetText();
+				sscanf(str, "%d", &normalizer);
+			}
+			if( textureType == Perlin)
+			{
+				mapElement = maps->FirstChildElement("NoiseScale");
+				if (mapElement != nullptr)
+				{
+					str = mapElement->GetText();
+					sscanf(str, "%f", &noiseScale);
+				}
+
+				mapElement = maps->FirstChildElement("NoiseConversion");
+				if (mapElement != nullptr)
+				{
+					str = mapElement->GetText();
+					if (str[0] == 'l')
+						noiseConversion = Linear;
+				}
+			}
+			//texture type
+			
+			cout << textureType<< imageID << interpolationType<< decalMode<< normalizer<< bumpFactor<< noiseConversion<< noiseScale << endl;
+			textureMaps.push_back(new TextureMap(id - 1,imageID-1, textureType, interpolationType, decalMode, normalizer, bumpFactor, noiseConversion, noiseScale));
+			maps = maps->NextSiblingElement("TextureMap");
+		}
 	
 	}
+	
 }
 void Scene::readXML(const char* xmlPath)
 {

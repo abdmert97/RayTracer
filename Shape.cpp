@@ -65,19 +65,20 @@ void Shape::initTransformatrix()
 	transformMatrixTranspose = glm::mat4x4(transposeMatrix(inverseTransformMatrix));
 }
 
-Shape::Shape(int id, int matIndex,Material * material, ShapeType type, vector<std::pair<char, int>> transformations, glm::vec3 motionBlur, ShadingMode shadingMode)
-    : id(id), matIndex(matIndex) ,shapeType(type),material(material),transformations(transformations),motionBlur(motionBlur),shadingMode(shadingMode)
+Shape::Shape(int id, int matIndex, int textureIndex, int textureIndex2,Material * material, ShapeType type, vector<std::pair<char, int>> transformations, glm::vec3 motionBlur, ShadingMode shadingMode)
+    : id(id), matIndex(matIndex),textureIndex(textureIndex),textureIndex2(textureIndex2) ,shapeType(type),material(material),transformations(transformations),motionBlur(motionBlur),shadingMode(shadingMode)
 {
 	bounds = nullptr;
 	isTransformed = glm::length(motionBlur) || transformations.size() != 0 ? true : false;
+	cout << textureIndex << " " << textureIndex2 << endl;
 }
 
 Sphere::Sphere(void)
 {}
 
 /* Constructor for sphere. You will implement this. */
-Sphere::Sphere(int id, int matIndex, Material* material, int cIndex, float R, vector<glm::vec3> *pVertices, ShapeType type, vector<std::pair<char, int>> transformations, glm::vec3 motionBlur, ShadingMode shadingMode)
-    : Shape(id, matIndex,material,type,transformations,motionBlur,shadingMode)
+Sphere::Sphere(int id, int matIndex, int textureIndex, int textureIndex2, Material* material, int cIndex, float R, vector<glm::vec3> *pVertices, ShapeType type, vector<std::pair<char, int>> transformations, glm::vec3 motionBlur, ShadingMode shadingMode)
+    : Shape(id, matIndex,textureIndex,textureIndex2,material,type,transformations,motionBlur,shadingMode)
 {
 this->radius = R;
 this->center = (*pVertices)[cIndex-1];
@@ -161,8 +162,8 @@ Triangle::Triangle(void)
 {}
 
 /* Constructor for triangle. You will implement this. */
-Triangle::Triangle(int id, int matIndex, Material* material, int p1Index, int p2Index, int p3Index, vector<glm::vec3> *pVertices, ShapeType type, vector<std::pair<char, int>> transformations, glm::vec3 motionBlur, ShadingMode shadingMode)
-    : Shape(id, matIndex,material,type,transformations,motionBlur, shadingMode)
+Triangle::Triangle(int id, int matIndex, int textureIndex, int textureIndex2, Material* material, int p1Index, int p2Index, int p3Index, vector<glm::vec3> *pVertices, ShapeType type, vector<std::pair<char, int>> transformations, glm::vec3 motionBlur, ShadingMode shadingMode)
+    : Shape(id, matIndex,textureIndex,textureIndex2,material,type,transformations,motionBlur, shadingMode)
 {
     point1 = p1Index-1;
     point2 = p2Index-1;
@@ -178,8 +179,8 @@ Mesh::Mesh()
 {}
 
 /* Constructor for mesh. You will implement this. */
-Mesh::Mesh(int id, int matIndex, Material* material, const vector<Triangle*>& faces, vector<int> *pIndices, vector<glm::vec3> *pVertices, ShapeType type, vector<std::pair<char, int>> transformations, glm::vec3 motionBlur, ShadingMode shadingMode)
-    : Shape(id, matIndex,material,type,transformations,motionBlur, shadingMode),faces(faces)
+Mesh::Mesh(int id, int matIndex, int textureIndex, int textureIndex2, Material* material, const vector<Triangle*>& faces, vector<int> *pIndices, vector<glm::vec3> *pVertices, ShapeType type, vector<std::pair<char, int>> transformations, glm::vec3 motionBlur, ShadingMode shadingMode)
+    : Shape(id, matIndex,textureIndex,textureIndex2,material,type,transformations,motionBlur, shadingMode),faces(faces)
 {
 	//for (Triangle triangle : faces)
 	//	triangle.getBounds();

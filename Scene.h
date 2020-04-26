@@ -29,6 +29,7 @@ class PointLight;
 class Shading;
 class Node;
 class Texture;
+class TextureMap;
 using namespace std;
 using namespace tinyxml2;
 
@@ -71,6 +72,7 @@ public:
 	vector<glm::vec3> vertices;		// Vector holding all vertices (vertex data)
 	vector<Shape*> objects;			// Vector holding all shapes
 	vector<Texture *> textures;
+	vector<TextureMap*> textureMaps;
 	Shading* shading;
 	
 	BoundingVolume* boundingVolume;

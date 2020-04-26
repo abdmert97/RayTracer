@@ -25,6 +25,7 @@ class BoundingBox;
 class Ray;
 class Material;
 class Scene;
+class TextureMap;
 // Base class for any shape object
 class Shape
 {
@@ -32,7 +33,10 @@ public:
 
 	int id;	        // Id of the shape
 	int matIndex;	// Material index of the shape
+	int textureIndex;
+	int textureIndex2;
 	bool isTransformed;
+	
 	ShapeType shapeType;
 	BoundingBox* bounds;
 	Material* material;
@@ -50,7 +54,7 @@ public:
 	virtual BoundingBox* getBounds()= 0;
     Shape(void);
 	void initTransformatrix();
-	Shape(int id, int matIndex, Material* material, ShapeType type, vector<std::pair<char, int>> transformations, glm::vec3 motionBlur, ShadingMode shadingMode); // Constructor
+	Shape(int id, int matIndex,int textureIndex, int textureIndex2, Material* material, ShapeType type, vector<std::pair<char, int>> transformations, glm::vec3 motionBlur, ShadingMode shadingMode); // Constructor
 	static float determinant(float matrix[3][3])
 	{
 		float a = matrix[0][0];
@@ -128,7 +132,7 @@ class Sphere: public Shape
 public:
 	
 	Sphere(void);	// Constructor
-	Sphere(int id, int matIndex, Material* material, int cIndex, float R, vector<glm::vec3> *vertices,ShapeType type, vector<std::pair<char, int>> transformations, glm::vec3 motionBlur, ShadingMode shadingMode);	// Constructor
+	Sphere(int id, int matIndex, int textureIndex, int textureIndex2, Material* material, int cIndex, float R, vector<glm::vec3> *vertices,ShapeType type, vector<std::pair<char, int>> transformations, glm::vec3 motionBlur, ShadingMode shadingMode);	// Constructor
 	
 	IntersectionInfo intersect(const Ray & ray, Ray* rayTransformed = nullptr) ;	// Will take a ray and return a structure related to the intersection information. You will implement this.
 	BoundingBox* getBounds();
@@ -143,7 +147,7 @@ class Triangle: public Shape
 {
 public:
 	Triangle(void);	// Constructor
-	Triangle(int id, int matIndex, Material* material, int p1Index, int p2Index, int p3Index, vector<glm::vec3> *vertices, ShapeType type, vector<std::pair<char, int>> transformations, glm::vec3 motionBlur, ShadingMode shadingMode);	// Constructor
+	Triangle(int id, int matIndex, int textureIndex, int textureIndex2, Material* material, int p1Index, int p2Index, int p3Index, vector<glm::vec3> *vertices, ShapeType type, vector<std::pair<char, int>> transformations, glm::vec3 motionBlur, ShadingMode shadingMode);	// Constructor
 	IntersectionInfo intersect(const Ray & ray, Ray* rayTransformed = nullptr) ; // Will take a ray and return a structure related to the intersection information. You will implement this.
 	BoundingBox* getBounds();
 private:
@@ -162,7 +166,7 @@ class Mesh: public Shape
 public:
 	BoundingVolume* boundingVolume;
 	Mesh(void);	// Constructor
-	Mesh(int id, int matIndex, Material* material, const vector<Triangle*>& faces, vector<int> *pIndices, vector<glm::vec3> *vertices, ShapeType type, vector<std::pair<char, int>> transformations, glm::vec3 motionBlur, ShadingMode shadingMode);	// Constructor
+	Mesh(int id, int matIndex, int textureIndex, int textureIndex2, Material* material, const vector<Triangle*>& faces, vector<int> *pIndices, vector<glm::vec3> *vertices, ShapeType type, vector<std::pair<char, int>> transformations, glm::vec3 motionBlur, ShadingMode shadingMode);	// Constructor
 	void MeshVolumeIntersection(const Ray& ray, Node* node, IntersectionInfo* intersecion_info,Ray * rayTransformed) ;
 	IntersectionInfo intersect(const Ray & ray, Ray* rayTransformed = nullptr) ; // Will take a ray and return a structure related to the intersection information. You will implement this.
 	BoundingBox* getBounds();
