@@ -16,7 +16,7 @@
 #include "Light.h"
 #include "Shading.h"
 #include "Node.h"
-
+#include "Texture.h"
 // Forward declarations to avoid cyclic references
 class Shape;
 class Triangle;
@@ -28,6 +28,7 @@ class BoundingVolume;
 class PointLight;
 class Shading;
 class Node;
+class Texture;
 using namespace std;
 using namespace tinyxml2;
 
@@ -69,7 +70,7 @@ public:
 	vector<Material*> materials;	// Vector holding all materials
 	vector<glm::vec3> vertices;		// Vector holding all vertices (vertex data)
 	vector<Shape*> objects;			// Vector holding all shapes
-
+	vector<Texture *> textures;
 	Shading* shading;
 	
 	BoundingVolume* boundingVolume;
@@ -94,26 +95,7 @@ public:
 
 
 
-	// Read XML
-	void readConstants(const char*& str, XMLError& eResult, XMLElement*& pElement, XMLNode* pRoot);
-	void readCamera(const char*& str, XMLError& eResult, XMLElement*& pElement, XMLNode* pRoot);
-	void readMaterials(const char*& str, XMLError& eResult, XMLElement*& pElement, XMLNode* pRoot);
-	void readTransformations(const char*& str, XMLError& eResult, XMLElement*& pElement, XMLNode* pRoot);
-	void readVertices(const char*& str, XMLElement*& pElement, XMLNode* pRoot);
-	vector<std::pair<char, int>> readTransform(const char*& str, XMLElement*& objElement, XMLElement*& pObject);
-	void readMeshes(const char*& str, XMLError& eResult, XMLElement*& pElement, int& idCount, XMLElement*& objElement,
-	                XMLElement*& pObject);
-	void readSpheres(const char*& str, XMLError& eResult, XMLElement*& pElement, int& idCount, XMLElement*& objElement,
-	                 XMLElement*& pObject);
-	void readTriangles(const char*& str, XMLError& eResult, XMLElement*& pElement, int& idCount,
-	                   XMLElement*& objElement,
-	                   XMLElement*& pObject);
-	void readInstances(const char*& str, XMLError& eResult, XMLElement*& pElement, int& idCount,
-		XMLElement*& objElement,
-		XMLElement*& pObject);
-	void readObjects(const char*& str, XMLError& eResult, XMLElement*& pElement, XMLNode* pRoot);
-	void readLights(const char*& str, XMLError& eResult, XMLElement*& pElement, XMLNode* pRoot);
-	// Read XML
+	
 
 	
 	void renderScene(void);			
@@ -123,7 +105,7 @@ public:
 	void BoundingBoxIntersection(Ray ray, Node* node, IntersectionInfo* retVal);
 	IntersectionInfo closestObject(Ray ray);
 	static float randomTime();
-
+	void readTexture(const char* fileName, int id);
 private:
 	void readXML(const char* xmlPath);
 	void readPly(const char* str, const vector<Triangle>& faces, vector<int>* is);
@@ -134,6 +116,29 @@ private:
 	void renderImage(Camera* camera, Image* image);
 	
 	void initMatrices();
+
+
+	// Read XML
+	void readConstants(const char*& str, XMLError& eResult, XMLElement*& pElement, XMLNode* pRoot);
+	void readCamera(const char*& str, XMLError& eResult, XMLElement*& pElement, XMLNode* pRoot);
+	void readMaterials(const char*& str, XMLError& eResult, XMLElement*& pElement, XMLNode* pRoot);
+	void readTransformations(const char*& str, XMLError& eResult, XMLElement*& pElement, XMLNode* pRoot);
+	void readVertices(const char*& str, XMLElement*& pElement, XMLNode* pRoot);
+	vector<std::pair<char, int>> readTransform(const char*& str, XMLElement*& objElement, XMLElement*& pObject);
+	void readMeshes(const char*& str, XMLError& eResult, XMLElement*& pElement, int& idCount, XMLElement*& objElement,
+		XMLElement*& pObject);
+	void readSpheres(const char*& str, XMLError& eResult, XMLElement*& pElement, int& idCount, XMLElement*& objElement,
+		XMLElement*& pObject);
+	void readTriangles(const char*& str, XMLError& eResult, XMLElement*& pElement, int& idCount,
+		XMLElement*& objElement,
+		XMLElement*& pObject);
+	void readInstances(const char*& str, XMLError& eResult, XMLElement*& pElement, int& idCount,
+		XMLElement*& objElement,
+		XMLElement*& pObject);
+	void readObjects(const char*& str, XMLError& eResult, XMLElement*& pElement, XMLNode* pRoot);
+	void readLights(const char*& str, XMLError& eResult, XMLElement*& pElement, XMLNode* pRoot);
+	void readTextureXml(const char*& str, XMLError& eResult, XMLElement*& pElement, XMLNode* pRoot);
+	// Read XML
 
 	int cameraCount;
 	int lightCount;

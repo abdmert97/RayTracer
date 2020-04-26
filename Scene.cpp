@@ -1,7 +1,8 @@
 #include "Scene.h"
 #include <random>
 #define PI 3.14159265
-
+#define STB_IMAGE_IMPLEMENTATION   
+#include "stb/stb_image.h"	
 
 void Scene::initScene()
 {
@@ -950,7 +951,29 @@ void Scene::readLights(const char*& str, XMLError& eResult, XMLElement*& pElemen
 		pLight = pLight->NextSiblingElement("PointLight");
 	}
 }
+void Scene::readTextureXml(const char*& str, XMLError& eResult, XMLElement*& pElement, XMLNode* pRoot)
+{
 
+	pElement = pRoot->FirstChildElement("Textures");
+	if (pElement != nullptr)
+	{
+	
+		
+		XMLElement* images = pElement->FirstChildElement("Images");
+	
+		XMLElement* image = images->FirstChildElement("Image");
+		while (image != nullptr)
+		{
+			int id;
+			eResult = image->QueryIntAttribute("id", &id);
+			
+			str = image->GetText();
+			readTexture(str,id-1);
+			image = image->NextSiblingElement("Image");
+		}
+	
+	}
+}
 void Scene::readXML(const char* xmlPath)
 {
 	const char* str;
@@ -984,6 +1007,8 @@ void Scene::readXML(const char* xmlPath)
 	
 	// Parse lights
 	readLights(str, eResult, pElement, pRoot);
+	// Read textures
+	readTextureXml(str, eResult, pElement, pRoot);
 }
 
 void Scene::BoundingBoxIntersection(Ray ray, Node* node, IntersectionInfo* retVal)
@@ -1171,4 +1196,23 @@ void Scene::initMatrices()
 	}
 
 
+}
+
+void Scene::readTexture(const char* fileName,int id)
+{
+	int width, height, bpp;
+	
+	const string filePath = "hw4/" + (string)fileName;
+	unsigned char* data = stbi_load(filePath.c_str(), &width, &height, &bpp, STBI_rgb);
+	if (!data) {
+		std::cout << "No File." << std::endl;
+		std::cout << fileName << endl;
+	}
+	else
+	{
+		std::cout << fileName << " readed" << endl;
+		Texture *texture =new Texture(id,height, width, data);
+		textures.push_back(texture);
+	}
+	stbi_image_free(data);
 }
