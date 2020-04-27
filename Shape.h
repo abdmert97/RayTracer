@@ -154,9 +154,6 @@ private:
     int point1;
     int point2;
     int point3;
-	glm::vec3 normal1;
-	glm::vec3 normal2;
-	glm::vec3 normal3;
 
 };
 

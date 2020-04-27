@@ -237,10 +237,12 @@ IntersectionInfo Triangle::intersect(const Ray& ray, Ray* rayTransformed)
 	glm::vec3 point1vec = pScene->vertices[point1];
 	glm::vec3 point2vec = pScene->vertices[point2];
 	glm::vec3 point3vec = pScene->vertices[point3];
-
+	glm::vec2 textCoord1 = pScene->textCoord[point1];
+	glm::vec2 textCoord2 = pScene->textCoord[point2];
+	glm::vec2 textCoord3 = pScene->textCoord[point3];
 
 	glm::vec3 rayDirection = rayTransformed->direction;
-	glm::vec3 rayOrigin	   = rayTransformed->origin   ;
+	glm::vec3 rayOrigin	   = rayTransformed->origin;
 
 	float AMatrix[3][3] = {
 
@@ -284,6 +286,9 @@ IntersectionInfo Triangle::intersect(const Ray& ray, Ray* rayTransformed)
 		returnValue.isIntersect = true;
 		returnValue.t = t;
 		returnValue.intersectionPoint = ray.getPoint(t);
+
+		returnValue.textCoord = (1 - beta - gamma) * textCoord1 + beta * textCoord2 + gamma * textCoord3;
+		
 		if (shadingMode == SmoothShading)
 		{
 			glm::vec3 crossProduct = glm::cross((point2vec - point1vec), (point3vec - point1vec));

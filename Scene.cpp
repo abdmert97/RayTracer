@@ -554,6 +554,31 @@ void Scene::readVertices(const char*& str, XMLElement*& pElement, XMLNode* pRoot
 		vertices.push_back(tmpPoint);
 	}
 }
+void Scene::readTextCoord(const char*& str, XMLElement*& pElement, XMLNode* pRoot)
+{
+	pElement = pRoot->FirstChildElement("TexCoordData");
+	int cursor = 0;
+	glm::vec2 tmpPoint;
+	str = pElement->GetText();
+	while (str[cursor] == ' ' || str[cursor] == '\t' || str[cursor] == '\n')
+		cursor++;
+	while (str[cursor] != '\0')
+	{
+		for (int cnt = 0; cnt < 2; cnt++)
+		{
+			if (cnt == 0)
+				tmpPoint.x = atof(str + cursor);
+			else if (cnt == 1)
+				tmpPoint.y = atof(str + cursor);
+			while (str[cursor] != ' ' && str[cursor] != '\t' && str[cursor] != '\n')
+				cursor++;
+			while (str[cursor] == ' ' || str[cursor] == '\t' || str[cursor] == '\n')
+				cursor++;
+		}
+		cout << tmpPoint.x << " " << tmpPoint.y << endl;
+		textCoord.push_back(tmpPoint);
+	}
+}
 
 vector<std::pair<char, int>> Scene::readTransform(const char*& str, XMLElement*& objElement, XMLElement*& pObject)
 {
@@ -1139,7 +1164,7 @@ void Scene::readTextureXml(const char*& str, XMLError& eResult, XMLElement*& pEl
 			//texture type
 			
 			cout << textureType<< imageID << interpolationType<< decalMode<< normalizer<< bumpFactor<< noiseConversion<< noiseScale << endl;
-			textureMaps.push_back(new TextureMap(id - 1,imageID-1, textureType, interpolationType, decalMode, normalizer, bumpFactor, noiseConversion, noiseScale));
+			textureMaps.push_back(new TextureMap(id - 1,textures[imageID-1], textureType, interpolationType, decalMode, normalizer, bumpFactor, noiseConversion, noiseScale));
 			maps = maps->NextSiblingElement("TextureMap");
 		}
 	
@@ -1174,6 +1199,8 @@ void Scene::readXML(const char* xmlPath)
 	
 	// Parse vertex data
 	readVertices(str, pElement, pRoot);
+
+	readTextCoord(str, pElement, pRoot);
 	
 	readObjects(str, eResult, pElement, pRoot);
 	

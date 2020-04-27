@@ -70,6 +70,7 @@ public:
 	vector<PointLight*> lights;		// Vector holding all point lights
 	vector<Material*> materials;	// Vector holding all materials
 	vector<glm::vec3> vertices;		// Vector holding all vertices (vertex data)
+	vector<glm::vec2> textCoord;
 	vector<Shape*> objects;			// Vector holding all shapes
 	vector<Texture *> textures;
 	vector<TextureMap*> textureMaps;
@@ -126,6 +127,7 @@ private:
 	void readMaterials(const char*& str, XMLError& eResult, XMLElement*& pElement, XMLNode* pRoot);
 	void readTransformations(const char*& str, XMLError& eResult, XMLElement*& pElement, XMLNode* pRoot);
 	void readVertices(const char*& str, XMLElement*& pElement, XMLNode* pRoot);
+	void readTextCoord(const char*& str, XMLElement*& pElement, XMLNode* pRoot);
 	vector<std::pair<char, int>> readTransform(const char*& str, XMLElement*& objElement, XMLElement*& pObject);
 	void readMeshes(const char*& str, XMLError& eResult, XMLElement*& pElement, int& idCount, XMLElement*& objElement,
 		XMLElement*& pObject);

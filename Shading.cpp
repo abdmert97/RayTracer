@@ -37,8 +37,16 @@ glm::vec3 Shading::shading(int depth, Shape*& shape, IntersectionInfo& closestOb
 			}
 			// Shading
 			glm::vec3 shaders;
+			if(shape->textureIndex != -1)
+			{
+				calculateTextureColor(closestObjectInfo, material,shape->textureIndex, light, lightVector, cameraVectorNormalized, shaders);
+				
+			}
+			else
+			{
+				calculateColor(closestObjectInfo, material, light, lightVector, cameraVectorNormalized, shaders);
+			}
 			
-			calculateColor(closestObjectInfo, material, light, lightVector, cameraVectorNormalized, shaders);
 			color = color + shaders;
 
 		}
@@ -82,6 +90,25 @@ bool Shading::isShadow(glm::vec3& lightPosition, glm::vec3& intersectionPoint)co
 	}*/
 
 	return false;
+}
+void Shading::calculateTextureColor(IntersectionInfo& closestObjectInfo, Material material,int textureIndex, PointLight* light, glm::vec3 lightVector, glm::vec3 cameraVectorNormalized, glm::vec3& shaders) const
+{
+	TextureMap *map = pScene->textureMaps[textureIndex];
+	
+  	glm::vec3 textureColor = map->getTextureColor(closestObjectInfo.textCoord);
+
+	glm::vec3 lightVectorNormalized = normalize(lightVector);
+	glm::vec3 intensity = light->computeLightContribution(closestObjectInfo.intersectionPoint);
+	shaders = { 0,0,0 };
+	glm::vec3 blinnPhongShade = blinnPhongShading(lightVectorNormalized, cameraVectorNormalized, material, intensity, closestObjectInfo.hitNormal);
+	if(map->decalMode == ReplaceKD)
+	{
+		material.diffuseRef = textureColor / glm::vec3(255);
+	}
+	glm::vec3 diffuseShade = diffuseShading(lightVectorNormalized, material, intensity, closestObjectInfo.hitNormal);
+	shaders = diffuseShade + blinnPhongShade;
+
+
 }
 void Shading::calculateColor(IntersectionInfo& closestObjectInfo, Material material, PointLight* light, glm::vec3 lightVector, glm::vec3 cameraVectorNormalized, glm::vec3& shaders) const
 {

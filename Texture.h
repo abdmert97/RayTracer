@@ -2,6 +2,8 @@
 #define _TEXTURE_H_
 #include  "Scene.h"
 
+class Scene;
+extern Scene* pScene;
 class Texture
 {
 public:
@@ -33,7 +35,9 @@ public:
 	}
 	glm::vec3 getTextureColor(int x,int y)
 	{
-		size_t index = 3 * (y * width + x);
+		
+		size_t index = (y * width + x);
+
 		return color[index];
 	}
 };
@@ -66,7 +70,8 @@ class TextureMap
 
 public:
 	int id;
-	int TextureID;
+	
+	Texture* texture;
 	TextureType textureType;
 	InterpolationType interpolationType;
 	DecalMode decalMode;
@@ -76,11 +81,11 @@ public:
 	float noiseScale;
 
 
-	TextureMap(const int id, const int texture_ýd, const TextureType texture_type,
+	TextureMap(const int id, Texture* texture, const TextureType texture_type,
 		const InterpolationType interpolation_type, const DecalMode decal_mode, const int normalizer,
 		const float bump_factor, const NoiseConversion noise_conversion, const float noise_scale)
 		: id(id),
-		  TextureID(texture_ýd),
+		  texture(texture),
 		  textureType(texture_type),
 		  interpolationType(interpolation_type),
 		  decalMode(decal_mode),
@@ -90,6 +95,59 @@ public:
 		  noiseScale(noise_scale)
 	{
 	}
+
+	glm::vec3 getTextureColor(glm::vec2 textCoord)
+	{
+		if (textureType == Perlin)
+			return getPerlinColor(textCoord);
+		return getStandardTextColor(textCoord);
+	}
+private:
+
+	
+
+	glm::vec3 bilinearInterpolation(const glm::vec2& textCoord)
+	{
+		glm::vec2 pixelPos = glm::vec2(textCoord.x * texture->width, textCoord.y * texture->height);
+	
+		int p = (int)pixelPos.x;
+		int q = (int)pixelPos.y;
+		
+		float dx = pixelPos.x - p;
+		float dy = pixelPos.y - q;
+		return texture->getTextureColor(p, q)*(1 - dx)*(1 - dy) +
+			   texture->getTextureColor(p + 1, q)*(dx)*(1 - dy) +
+			   texture->getTextureColor(p, q + 1)*(1 - dx)*(dy)+
+			   texture->getTextureColor(p + 1, q + 1)*(dx)*(dy);
+	}
+
+	glm::vec3 nearestInterpolation(const glm::vec2& textCoord)
+	{
+		glm::vec2 pixelPos = glm::vec2(textCoord.x * texture->width, textCoord.y * texture->height);
+		int p = (int)pixelPos.x;
+		int q = (int)pixelPos.y;
+		return texture->getTextureColor(p, q);
+	}
+
+	glm::vec3 getStandardTextColor(const glm::vec2& textCoord)
+	{
+		switch (interpolationType)
+		{
+		case Bilinear:
+			return bilinearInterpolation(textCoord);
+			break;
+		case Nearest:
+			return nearestInterpolation(textCoord);
+			break;
+		}
+	}
+
+	glm::vec3 getPerlinColor(const glm::vec2& vec)
+	{
+		return glm::vec3(0);
+	}
+
+	
 };
 
 
