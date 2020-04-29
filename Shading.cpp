@@ -103,7 +103,7 @@ void Shading::calculateTextureColor(IntersectionInfo& closestObjectInfo, Materia
 	glm::vec3 blinnPhongShade = blinnPhongShading(lightVectorNormalized, cameraVectorNormalized, material, intensity, closestObjectInfo.hitNormal);
 	if(map->decalMode == ReplaceKD)
 	{
-		material.diffuseRef = textureColor / glm::vec3(255);
+		material.diffuseRef = textureColor / glm::vec3(map->normalizer);
 	}
 	glm::vec3 diffuseShade = diffuseShading(lightVectorNormalized, material, intensity, closestObjectInfo.hitNormal);
 	shaders = diffuseShade + blinnPhongShade;

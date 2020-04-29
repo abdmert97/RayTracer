@@ -23,7 +23,7 @@ public:
 			for (int j = 0; j < height; j++)
 			{
 				// read rgb
-				size_t index = 3 * (j * width + i);
+				size_t index = 3 * (i * height + j);
 				glm::vec3 indexColor = {
 					static_cast<int>(data[index + 0]),
 					static_cast<int>(data[index + 1]),
@@ -109,7 +109,7 @@ private:
 	glm::vec3 bilinearInterpolation(const glm::vec2& textCoord)
 	{
 		
-		glm::vec2 pixelPos = glm::vec2(textCoord.y * texture->width, textCoord.x * texture->height);
+		glm::vec2 pixelPos = glm::vec2((textCoord.x) * texture->width, textCoord.y * texture->height);
 	
 		int p = (int)pixelPos.x;
 		int q = (int)pixelPos.y;
