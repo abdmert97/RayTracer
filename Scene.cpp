@@ -557,6 +557,8 @@ void Scene::readVertices(const char*& str, XMLElement*& pElement, XMLNode* pRoot
 void Scene::readTextCoord(const char*& str, XMLElement*& pElement, XMLNode* pRoot)
 {
 	pElement = pRoot->FirstChildElement("TexCoordData");
+	if (pElement == nullptr)
+		return;
 	int cursor = 0;
 	glm::vec2 tmpPoint;
 	str = pElement->GetText();
@@ -1186,7 +1188,6 @@ void Scene::readXML(const char* xmlPath)
 	XMLNode* pRoot = xmlDoc.FirstChild();
 	
 	readConstants(str, eResult, pElement, pRoot);
-	
 	// Parse cameras
 	readCamera(str, eResult, pElement, pRoot);
 	

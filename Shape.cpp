@@ -1,6 +1,6 @@
 #include "Shape.h"
 #include <stack>
-
+#define PI 3.14159265
 
 extern Scene *pScene;
 Shape::Shape(void)
@@ -221,6 +221,26 @@ IntersectionInfo Sphere::intersect(const Ray& ray, Ray* rayTransformed)
 	returnValue.t = intersectiont;
 	returnValue.objectID = id;
 	returnValue.hitNormal = glm::normalize ((ray.getPoint(intersectiont) - center));
+
+	if(textureIndex != -1)
+	{
+		glm::vec3 hitPoint = (returnValue.intersectionPoint - center);
+	
+		x = hitPoint.x;
+		y = hitPoint.y;
+		z = hitPoint.z;
+		float cos = -y/radius;
+
+		float theta = acosf(cos);
+		float fi = atan2(-z, x);
+		
+		returnValue.textCoord.x = (fi + PI) / (2 * PI);
+		returnValue.textCoord.y = theta/PI;
+
+
+	
+	}
+	
 	//if(transformations.size() != 0)
 	//{
 	//	returnValue.hitNormal = transformNormal(returnValue.hitNormal);
@@ -237,9 +257,7 @@ IntersectionInfo Triangle::intersect(const Ray& ray, Ray* rayTransformed)
 	glm::vec3 point1vec = pScene->vertices[point1];
 	glm::vec3 point2vec = pScene->vertices[point2];
 	glm::vec3 point3vec = pScene->vertices[point3];
-	glm::vec2 textCoord1 = pScene->textCoord[point1];
-	glm::vec2 textCoord2 = pScene->textCoord[point2];
-	glm::vec2 textCoord3 = pScene->textCoord[point3];
+
 
 	glm::vec3 rayDirection = rayTransformed->direction;
 	glm::vec3 rayOrigin	   = rayTransformed->origin;
@@ -286,8 +304,13 @@ IntersectionInfo Triangle::intersect(const Ray& ray, Ray* rayTransformed)
 		returnValue.isIntersect = true;
 		returnValue.t = t;
 		returnValue.intersectionPoint = ray.getPoint(t);
-
-		returnValue.textCoord = (1 - beta - gamma) * textCoord1 + beta * textCoord2 + gamma * textCoord3;
+		if(textureIndex != -1)
+		{
+			glm::vec2 textCoord1 = pScene->textCoord[point1];
+			glm::vec2 textCoord2 = pScene->textCoord[point2];
+			glm::vec2 textCoord3 = pScene->textCoord[point3];
+			returnValue.textCoord = (1 - beta - gamma) * textCoord1 + beta * textCoord2 + gamma * textCoord3;
+		}
 		
 		if (shadingMode == SmoothShading)
 		{
