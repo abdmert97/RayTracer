@@ -310,6 +310,35 @@ IntersectionInfo Triangle::intersect(const Ray& ray, Ray* rayTransformed)
 			glm::vec2 textCoord2 = pScene->textCoord[point2];
 			glm::vec2 textCoord3 = pScene->textCoord[point3];
 			returnValue.textCoord = (1 - beta - gamma) * textCoord1 + beta * textCoord2 + gamma * textCoord3;
+
+			if (pScene->textureMaps[textureIndex]->decalMode == ReplaceNormal)
+			{
+				
+				glm::vec3 edge1 = point2vec - point1vec;
+				glm::vec3 edge2 = point3vec - point1vec;
+				glm::vec2 deltaUV1 = textCoord2 - textCoord1;
+				glm::vec2 deltaUV2 = textCoord3 - textCoord1;
+				float f = 1.0f / (deltaUV1.x * deltaUV2.y - deltaUV2.x * deltaUV1.y);
+				glm::vec3 tangent, bitangent;
+				tangent.x = f * (deltaUV2.y * edge1.x - deltaUV1.y * edge2.x);
+				tangent.y = f * (deltaUV2.y * edge1.y - deltaUV1.y * edge2.y);
+				tangent.z = f * (deltaUV2.y * edge1.z - deltaUV1.y * edge2.z);
+				tangent = glm::normalize(tangent);
+
+				bitangent.x = f * (-deltaUV2.x * edge1.x + deltaUV1.x * edge2.x);
+				bitangent.y = f * (-deltaUV2.x * edge1.y + deltaUV1.x * edge2.y);
+				bitangent.z = f * (-deltaUV2.x * edge1.z + deltaUV1.x * edge2.z);
+				bitangent = glm::normalize(bitangent);
+
+
+				glm::vec3 N = glm::cross(edge1, edge2);
+				returnValue.TBN = { tangent.x,bitangent.x,N.x ,
+									tangent.y,bitangent.y,N.y ,
+									tangent.z,bitangent.z,N.z
+				};
+			
+			}
+			
 		}
 		
 		if (shadingMode == SmoothShading)
@@ -326,7 +355,10 @@ IntersectionInfo Triangle::intersect(const Ray& ray, Ray* rayTransformed)
 	
 		if (transformations.size() != 0)
 			returnValue.hitNormal = glm::normalize(transformNormal(returnValue.hitNormal));
-	
+
+
+		
+		
 	}
 
 	return returnValue;
