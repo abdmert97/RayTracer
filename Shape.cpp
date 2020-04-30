@@ -319,11 +319,10 @@ IntersectionInfo Triangle::intersect(const Ray& ray, Ray* rayTransformed)
 		if (transformations.size() != 0)
 			returnValue.hitNormal = glm::normalize(transformNormal(returnValue.hitNormal));
 
-
-
 		
-		if(textureIndex != -1)
+		if(textureIndex != -1&& pScene->textureMaps[textureIndex]->textureType == StandardTexture)
 		{
+	
 			glm::vec2 textCoord1 = pScene->textCoord[point1];
 			glm::vec2 textCoord2 = pScene->textCoord[point2];
 			glm::vec2 textCoord3 = pScene->textCoord[point3];
@@ -360,11 +359,6 @@ IntersectionInfo Triangle::intersect(const Ray& ray, Ray* rayTransformed)
 			}
 			
 		}
-		
-	
-
-		
-		
 	}
 
 	return returnValue;
