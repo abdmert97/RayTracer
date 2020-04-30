@@ -106,7 +106,25 @@ void Shading::calculateTextureColor(IntersectionInfo& closestObjectInfo, Materia
 	if(map->textureType == Perlin)
 	{
 		glm::vec3 textureColor = map->getTextureColor(closestObjectInfo.textCoord,closestObjectInfo.intersectionPoint);
-		material.diffuseRef = textureColor/ glm::vec3(100);
+
+		if (textureColor.r > 1 || textureColor.r < -1)
+		{
+			cout << textureColor.r << endl;
+		}
+		if(map->noiseConversion == Absval)
+		{
+			textureColor = glm::vec3(abs(textureColor.r));
+		}
+		else
+		{
+			float col = textureColor.r;
+
+			col = (col + 1.0) / 2.0;
+			
+			textureColor = glm::vec3(col);
+	
+		}
+		material.diffuseRef = textureColor;
 		diffuseShade = diffuseShading(lightVectorNormalized, material, intensity, closestObjectInfo.hitNormal);
 		blinnPhongShade = blinnPhongShading(lightVectorNormalized, cameraVectorNormalized, material, intensity, closestObjectInfo.hitNormal);
 		
