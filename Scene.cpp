@@ -1050,24 +1050,28 @@ void Scene::readTextureXml(const char*& str, XMLError& eResult, XMLElement*& pEl
 	
 		
 		XMLElement* images = pElement->FirstChildElement("Images");
-	
-		XMLElement* image = images->FirstChildElement("Image");
-		while (image != nullptr)
+		if(images != nullptr)
 		{
-			int id;
-			eResult = image->QueryIntAttribute("id", &id);
+			XMLElement* image = images->FirstChildElement("Image");
+			while (image != nullptr)
+			{
+				int id;
+				eResult = image->QueryIntAttribute("id", &id);
+
+				str = image->GetText();
+				readTexture(str, id - 1);
+				image = image->NextSiblingElement("Image");
+			}
 			
-			str = image->GetText();
-			readTexture(str,id-1);
-			image = image->NextSiblingElement("Image");
 		}
+	
 
 		XMLElement* maps = pElement->FirstChildElement("TextureMap");
 		XMLElement* mapElement;
 		while (maps != nullptr)
 		{
 			int id;
-			int imageID;
+			int imageID = -1;
 			TextureType textureType = StandardTexture;
 			InterpolationType interpolationType = Bilinear;
 			DecalMode decalMode = ReplaceKD;
@@ -1087,8 +1091,11 @@ void Scene::readTextureXml(const char*& str, XMLError& eResult, XMLElement*& pEl
 				textureType = Perlin;
 			}
 			mapElement = maps->FirstChildElement("ImageId");
-			str = mapElement->GetText();
-			sscanf(str, "%d", &imageID);
+			if(mapElement!= nullptr)
+			{
+				str = mapElement->GetText();
+				sscanf(str, "%d", &imageID);
+			}
 		
 
 			
@@ -1166,7 +1173,12 @@ void Scene::readTextureXml(const char*& str, XMLError& eResult, XMLElement*& pEl
 			//texture type
 			
 			cout << textureType<< imageID << interpolationType<< decalMode<< normalizer<< bumpFactor<< noiseConversion<< noiseScale << endl;
-			textureMaps.push_back(new TextureMap(id - 1,textures[imageID-1], textureType, interpolationType, decalMode, normalizer, bumpFactor, noiseConversion, noiseScale));
+			if(imageID != -1)
+				textureMaps.push_back(new TextureMap(id - 1,textures[imageID-1], textureType, interpolationType, decalMode, normalizer, bumpFactor, noiseConversion, noiseScale));
+			else
+			{
+				textureMaps.push_back(new TextureMap(id - 1, nullptr, textureType, interpolationType, decalMode, normalizer, bumpFactor, noiseConversion, noiseScale));
+			}
 			maps = maps->NextSiblingElement("TextureMap");
 		}
 	

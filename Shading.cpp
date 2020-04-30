@@ -95,19 +95,57 @@ void Shading::calculateTextureColor(IntersectionInfo& closestObjectInfo, Materia
 {
 	TextureMap *map = pScene->textureMaps[textureIndex];
 	
-  	glm::vec3 textureColor = map->getTextureColor(closestObjectInfo.textCoord);
+ 
 
 	glm::vec3 lightVectorNormalized = normalize(lightVector);
 	glm::vec3 intensity = light->computeLightContribution(closestObjectInfo.intersectionPoint);
 	shaders = { 0,0,0 };
-	glm::vec3 blinnPhongShade = blinnPhongShading(lightVectorNormalized, cameraVectorNormalized, material, intensity, closestObjectInfo.hitNormal);
-	if(map->decalMode == ReplaceKD)
+	glm::vec3 blinnPhongShade  ;
+
+	glm::vec3 diffuseShade;
+	if(map->textureType == Perlin)
 	{
-		material.diffuseRef = textureColor / glm::vec3(map->normalizer);
+		glm::vec3 textureColor = map->getTextureColor(closestObjectInfo.textCoord,closestObjectInfo.intersectionPoint);
+		material.diffuseRef = textureColor/ glm::vec3(100);
+		diffuseShade = diffuseShading(lightVectorNormalized, material, intensity, closestObjectInfo.hitNormal);
+		blinnPhongShade = blinnPhongShading(lightVectorNormalized, cameraVectorNormalized, material, intensity, closestObjectInfo.hitNormal);
+		
 	}
-	glm::vec3 diffuseShade = diffuseShading(lightVectorNormalized, material, intensity, closestObjectInfo.hitNormal);
+	else
+	{
+		glm::vec3 textureColor = map->getTextureColor(closestObjectInfo.textCoord);
+		if (map->decalMode == ReplaceKD)
+		{
+			material.diffuseRef = textureColor / glm::vec3(map->normalizer);
+			diffuseShade = diffuseShading(lightVectorNormalized, material, intensity, closestObjectInfo.hitNormal);
+			blinnPhongShade = blinnPhongShading(lightVectorNormalized, cameraVectorNormalized, material, intensity, closestObjectInfo.hitNormal);
+		}
+		else if (map->decalMode == ReplaceNormal)
+		{
+			glm::vec3 norm = textureColor / glm::vec3(255) - glm::vec3(0.5);
+
+			norm = glm::normalize(multiplyMatrixWithVec3(closestObjectInfo.TBN, norm));
+
+			diffuseShade = diffuseShading(lightVectorNormalized, material, intensity, norm);
+			blinnPhongShade = blinnPhongShading(lightVectorNormalized, cameraVectorNormalized, material, intensity, norm);
+
+		}
+	}
+	
+	
 	shaders = diffuseShade + blinnPhongShade;
 
+
+}
+glm::vec3 Shading::diffuseShading(glm::vec3 lightRayVector, Material& material, glm::vec3& lightIntensity, glm::vec3& normal)const
+{
+
+	float cosTheta = dot(lightRayVector, normal);
+	if (cosTheta < 0) cosTheta = 0;
+
+	glm::vec3 diffuse = glm::vec3(lightIntensity * cosTheta * material.diffuseRef);
+
+	return diffuse;
 
 }
 void Shading::calculateColor(IntersectionInfo& closestObjectInfo, Material material, PointLight* light, glm::vec3 lightVector, glm::vec3 cameraVectorNormalized, glm::vec3& shaders) const
@@ -135,17 +173,7 @@ glm::vec3 Shading::blinnPhongShading(glm::vec3 lightRayVector, glm::vec3& camera
 	return blinnPhongLight;
 
 }
-glm::vec3 Shading::diffuseShading(glm::vec3 lightRayVector, Material& material, glm::vec3& lightIntensity, glm::vec3& normal)const
-{
 
-	float cosTheta = dot(lightRayVector,normal);
-	if (cosTheta < 0) cosTheta = 0;
-
-	glm::vec3 diffuse =glm::vec3(lightIntensity* cosTheta * material.diffuseRef);
-
-	return diffuse;
-
-}
 glm::vec3 Shading::reflect(const glm::vec3& incoming, const glm::vec3& normal)
 {
 	return incoming - normal * glm::dot(incoming, normal) * glm::vec3(2);

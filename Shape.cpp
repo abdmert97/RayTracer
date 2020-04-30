@@ -304,6 +304,24 @@ IntersectionInfo Triangle::intersect(const Ray& ray, Ray* rayTransformed)
 		returnValue.isIntersect = true;
 		returnValue.t = t;
 		returnValue.intersectionPoint = ray.getPoint(t);
+		if (shadingMode == SmoothShading)
+		{
+			glm::vec3 crossProduct = glm::cross((point2vec - point1vec), (point3vec - point1vec));
+			returnValue.hitNormal = glm::normalize(crossProduct);
+		}
+		else
+		{
+			glm::vec3 crossProduct = glm::cross((point2vec - point1vec), (point3vec - point1vec));
+			returnValue.hitNormal = glm::normalize(crossProduct);
+		}
+
+
+		if (transformations.size() != 0)
+			returnValue.hitNormal = glm::normalize(transformNormal(returnValue.hitNormal));
+
+
+
+		
 		if(textureIndex != -1)
 		{
 			glm::vec2 textCoord1 = pScene->textCoord[point1];
@@ -320,6 +338,8 @@ IntersectionInfo Triangle::intersect(const Ray& ray, Ray* rayTransformed)
 				glm::vec2 deltaUV2 = textCoord3 - textCoord1;
 				float f = 1.0f / (deltaUV1.x * deltaUV2.y - deltaUV2.x * deltaUV1.y);
 				glm::vec3 tangent, bitangent;
+
+				
 				tangent.x = f * (deltaUV2.y * edge1.x - deltaUV1.y * edge2.x);
 				tangent.y = f * (deltaUV2.y * edge1.y - deltaUV1.y * edge2.y);
 				tangent.z = f * (deltaUV2.y * edge1.z - deltaUV1.y * edge2.z);
@@ -329,33 +349,19 @@ IntersectionInfo Triangle::intersect(const Ray& ray, Ray* rayTransformed)
 				bitangent.y = f * (-deltaUV2.x * edge1.y + deltaUV1.x * edge2.y);
 				bitangent.z = f * (-deltaUV2.x * edge1.z + deltaUV1.x * edge2.z);
 				bitangent = glm::normalize(bitangent);
+			
 
-
-				glm::vec3 N = glm::cross(edge1, edge2);
-				returnValue.TBN = { tangent.x,bitangent.x,N.x ,
-									tangent.y,bitangent.y,N.y ,
-									tangent.z,bitangent.z,N.z
-				};
+			
+				returnValue.TBN = glm::mat3x3( tangent.x,bitangent.x,returnValue.hitNormal.x ,
+									tangent.y,bitangent.y,returnValue.hitNormal.y ,
+									tangent.z,bitangent.z,returnValue.hitNormal.z
+				);
 			
 			}
 			
 		}
 		
-		if (shadingMode == SmoothShading)
-		{
-			glm::vec3 crossProduct = glm::cross((point2vec - point1vec), (point3vec - point1vec));
-			returnValue.hitNormal = glm::normalize(crossProduct);
-		}
-		else
-		{
-			glm::vec3 crossProduct = glm::cross((point2vec - point1vec), (point3vec - point1vec));
-			returnValue.hitNormal = glm::normalize(crossProduct);
-		}
 	
-	
-		if (transformations.size() != 0)
-			returnValue.hitNormal = glm::normalize(transformNormal(returnValue.hitNormal));
-
 
 		
 		

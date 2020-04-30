@@ -7,7 +7,7 @@ typedef struct IntersectionInfo
 	glm::vec3 hitNormal;
 	int objectID;
 	glm::vec2 textCoord;
-
+	glm::mat3x3 TBN;
 	IntersectionInfo()
 	{
 		isIntersect = false;
@@ -16,6 +16,8 @@ typedef struct IntersectionInfo
 		t = -1;
 		hitNormal = { 0,0,0 };
 		textCoord = { -1,-1 };
+		TBN = glm::mat3x3(0);
+		
 	}
 	IntersectionInfo operator=(IntersectionInfo rhs)
 	{
@@ -25,6 +27,7 @@ typedef struct IntersectionInfo
 		hitNormal = rhs.hitNormal;
 		objectID = rhs.objectID;
 		textCoord = rhs.textCoord;
+		TBN = rhs.TBN;
 		return *this;
 	}
 } IntersectionInfo;

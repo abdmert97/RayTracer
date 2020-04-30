@@ -14,6 +14,8 @@ class Material;
 class Shape;
 class IntersectionInfo;
 class TextureMap;
+
+
 class Shading
 {
 
@@ -52,6 +54,23 @@ private:
 	glm::vec3 blinnPhongShading(glm::vec3 lightRayVector, glm::vec3& cameraRayVector, Material& material,
 	glm::vec3& lightIntensity, glm::vec3& normal) const;
 	glm::vec3 diffuseShading(glm::vec3 lightRayVector, Material& material, glm::vec3& lightIntensity, glm::vec3& normal)const;
+	glm::vec3 multiplyMatrixWithVec3(glm::mat3x3 m, glm::vec3 v)const
+	{
+		double values[3];
+		double total;
+
+		for (int i = 0; i < 3; i++)
+		{
+			total = 0;
+			for (int j = 0; j < 3; j++)
+			{
+				total += m[i][j] * v[j];
+			}
+			values[i] = total;
+		}
+
+		return glm::vec3(values[0], values[1], values[2]);
+	}
 public:
 	glm::vec3 shading(int depth, Shape*& shape, IntersectionInfo& closestObjectInfo, Ray& ray, float n_t =1);
 	glm::vec3 reflect(const glm::vec3& incoming, const glm::vec3& normal);

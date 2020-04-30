@@ -1,6 +1,11 @@
 #ifndef _TEXTURE_H_
 #define _TEXTURE_H_
 #include  "Scene.h"
+// shuffle algorithm example
+
+#include <algorithm>    // std::shuffle
+#include <array>        // std::array
+#include <random>       // std::default_random_engine
 
 class Scene;
 extern Scene* pScene;
@@ -65,6 +70,10 @@ enum DecalMode
 	BlendKD,
 	BumpNormal
 };
+
+
+
+
 class TextureMap
 {
 
@@ -94,18 +103,85 @@ public:
 		  noiseConversion(noise_conversion),
 		  noiseScale(noise_scale)
 	{
+		if(texture_type == Perlin)
+		{
+			shuffleG();
+		}
 	}
 
-	glm::vec3 getTextureColor(glm::vec2 textCoord)
+	glm::vec3 getTextureColor(glm::vec2 textCoord, glm::vec3 hitPoint =glm::vec3(0))
 	{
 		if (textureType == Perlin)
-			return getPerlinColor(textCoord);
+			return getPerlinColor(textCoord,hitPoint);
 		return getStandardTextColor(textCoord);
 	}
+
 private:
 
+	glm::vec3 G[16] = { glm::vec3(1,1,0),glm::vec3(-1,1,0),
+			  glm::vec3(1,-1,0),glm::vec3(-1,-1,0),glm::vec3(1,0,1),glm::vec3(-1,0,1),
+			  glm::vec3(1,0,-1),glm::vec3(-1,0,-1),glm::vec3(0,1,1),glm::vec3(0,-1,1),
+			  glm::vec3(0,1,-1),glm::vec3(0,-1,-1),glm::vec3(1,1,0),glm::vec3(-1,1,0),
+			  glm::vec3(0,-1,1),glm::vec3(0,-1,-1) };
+	int P[16] = { 0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15 };
+	void shuffleG()
+	{
+		std::shuffle(P, P+16, default_random_engine(0));
+	}
+	static float W(float x)
+	{
+		
+		return-6 * pow(x, 6) + 15 * pow(x, 4) - 10 * pow(x, 3) + 1;
+	}
+	static float perlinColor(glm::vec3 iP,vector<glm::vec3> eArray)
+	{
+		float value = 0;
+		glm::vec3 p0 = glm::vec3(floor(iP.x), floor(iP.y), floor(iP.z));
+		glm::vec3 p1 = glm::vec3( ceil(iP.x), floor(iP.y), floor(iP.z));
+		glm::vec3 p2 = glm::vec3(floor(iP.x), ceil(iP.y),  floor(iP.z));
+		glm::vec3 p3 = glm::vec3( ceil(iP.x), ceil(iP.y),  floor(iP.z));
+		glm::vec3 p4 = glm::vec3(floor(iP.x), floor(iP.y), ceil(iP.z));
+		glm::vec3 p5 = glm::vec3( ceil(iP.x), floor(iP.y), ceil(iP.z));
+		glm::vec3 p6 = glm::vec3(floor(iP.x), ceil(iP.y),  ceil(iP.z));
+		glm::vec3 p7 = glm::vec3( ceil(iP.x), ceil(iP.y),  ceil(iP.z));
+		glm::vec3 v0 = iP - p0;
+		glm::vec3 v1 = iP - p1;
+		glm::vec3 v2 = iP - p2;
+		glm::vec3 v3 = iP - p3;
+		glm::vec3 v4 = iP - p4;
+		glm::vec3 v5 = iP - p5;
+		glm::vec3 v6 = iP - p6;
+		glm::vec3 v7 = iP - p7;
+		value = glm::dot(v0, eArray[0]) * W(v0.x) * W(v0.y) * W(v0.z) +
+			    glm::dot(v1, eArray[1]) * W(v1.x) * W(v1.y) * W(v1.z) +
+			    glm::dot(v2, eArray[2]) * W(v2.x) * W(v2.y) * W(v2.z) +
+			    glm::dot(v3, eArray[3]) * W(v3.x) * W(v3.y) * W(v3.z) +
+			    glm::dot(v4, eArray[4]) * W(v4.x) * W(v4.y) * W(v4.z) +
+			    glm::dot(v5, eArray[5]) * W(v5.x) * W(v5.y) * W(v5.z) +
+			    glm::dot(v6, eArray[6]) * W(v6.x) * W(v6.y) * W(v6.z) +
+			    glm::dot(v7, eArray[7]) * W(v7.x) * W(v7.y) * W(v7.z);
 	
+		return abs(value);
+	}			
+	
+	vector<glm::vec3> randomVectors()
+	{
+		vector<glm::vec3> randoms;
+		for(int i = 0 ; i < 2 ; i++)
+		{
+			for (int j = 0; j < 2; j++)
+			{
+				for (int k = 0; k < 2; k++)
+				{
+					int index = P[(i + P[(j + P[k % 16]) % 16]) % 16];
+					randoms.push_back(G[index]);
+				}
+			}
+		}
+		return randoms;
+	}
 
+	
 	glm::vec3 bilinearInterpolation(const glm::vec2& textCoord)
 	{
 		
@@ -143,9 +219,14 @@ private:
 		}
 	}
 
-	glm::vec3 getPerlinColor(const glm::vec2& vec)
+	glm::vec3 getPerlinColor(const glm::vec2& textCoord,glm::vec3 hitPoint)
 	{
-		return glm::vec3(0);
+		
+		float color = perlinColor(hitPoint, randomVectors());
+		//if(color!= 0)
+		//	cout << color << endl;
+		
+		return glm::vec3(color);
 	}
 
 	
