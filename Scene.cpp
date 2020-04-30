@@ -577,7 +577,7 @@ void Scene::readTextCoord(const char*& str, XMLElement*& pElement, XMLNode* pRoo
 			while (str[cursor] == ' ' || str[cursor] == '\t' || str[cursor] == '\n')
 				cursor++;
 		}
-		cout << tmpPoint.x << " " << tmpPoint.y << endl;
+	
 		textCoord.push_back(tmpPoint);
 	}
 }
@@ -671,7 +671,7 @@ void Scene::readMeshes(const char*& str, XMLError& eResult, XMLElement*& pElemen
 		
 			happly::PLYData plyIn(filePath);
 			int currID = vertices.size();
-			cout << currID << endl;
+	
 			std::vector<std::array<double, 3>> vPos = plyIn.getVertexPositions();
 			std::vector<std::vector<int>> fInd = plyIn.getFaceIndices<int>();
 			
@@ -899,7 +899,7 @@ void Scene::readTriangles(const char*& str, XMLError& eResult, XMLElement*& pEle
 
 				while (str[cursor] == ' ' || str[cursor] == '\t' || str[cursor] == '\n')
 					cursor++;
-				cout << transform.first << " first " << transform.second << endl;
+		
 				transformList.push_back(transform);
 			}
 		}
@@ -1172,7 +1172,7 @@ void Scene::readTextureXml(const char*& str, XMLError& eResult, XMLElement*& pEl
 			}
 			//texture type
 			
-			cout << textureType<< imageID << interpolationType<< decalMode<< normalizer<< bumpFactor<< noiseConversion<< noiseScale << endl;
+			
 			if(imageID != -1)
 				textureMaps.push_back(new TextureMap(id - 1,textures[imageID-1], textureType, interpolationType, decalMode, normalizer, bumpFactor, noiseConversion, noiseScale));
 			else
