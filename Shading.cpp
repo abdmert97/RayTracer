@@ -146,6 +146,12 @@ void Shading::calculateTextureColor(IntersectionInfo& closestObjectInfo, Materia
 	{
 		
 		glm::vec3 textureColor = map->getTextureColor(closestObjectInfo.textCoord);
+		if (map->decalMode == ReplaceALL)
+		{
+			shaders = textureColor;
+			return;
+
+		}
 		if (map->decalMode == ReplaceKD)
 		{
 			material.diffuseRef = textureColor / glm::vec3(map->normalizer);
