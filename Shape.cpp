@@ -136,6 +136,7 @@ BoundingBox* Triangle::getBounds()
 		bounds->max = BoundingBox::getMax(pScene->vertices[point1], BoundingBox::getMax(pScene->vertices[point2], pScene->vertices[point3]));
 		//bounds->min = transformVector(bounds->min);
 		//bounds->max = transformVector(bounds->max);
+		
 	}
 	return bounds;
 }
@@ -158,6 +159,45 @@ BoundingBox* Mesh::getBounds()
 	return bounds;
 }
 
+void Mesh::calculateFaceNormals()
+{
+	for (int i = 0; i < faces.size(); i++)
+	{
+		Triangle* tris = faces[i];
+		tris->normal1 = glm::vec3(0);
+		tris->normal2 = glm::vec3(0);
+		tris->normal3 = glm::vec3(0);
+		int count1 = 0;
+		int count2 = 0;
+		int count3 = 0;
+		for (int j = 0; j < faces.size(); j++)
+		{
+			Triangle* trisCheck = faces[j];
+			if (tris->point1 == trisCheck->point1 || tris->point1 == trisCheck->point2 || tris->point1 == trisCheck->point3)
+			{
+				tris->normal1 += trisCheck->getNormal();
+				count1++;
+			}
+			if (tris->point2 == trisCheck->point1 || tris->point2 == trisCheck->point2 || tris->point2 == trisCheck->point3)
+			{
+				tris->normal2 += trisCheck->getNormal();
+				count2++;
+			}
+			if (tris->point3 == trisCheck->point1 || tris->point3 == trisCheck->point2 || tris->point3 == trisCheck->point3)
+			{
+				tris->normal3 += trisCheck->getNormal();
+				count3++;
+			}
+		
+		}
+		
+		tris->normal1 /= count1;
+		tris->normal2 /= count2;
+		tris->normal3 /= count3;
+
+	}
+}
+
 Triangle::Triangle(void)
 {}
 
@@ -168,12 +208,22 @@ Triangle::Triangle(int id, int matIndex, int textureIndex, int textureIndex2, Ma
     point1 = p1Index-1;
     point2 = p2Index-1;
     point3 = p3Index-1;
-	//getBounds();
 }
 
 /* Triangle-ray intersection routine. You will implement this.
 Note that IntersectionInfo structure should hold the information related to the intersection point, e.g., coordinate of that point, normal at that point etc.
 You should to declare the variables  in IntersectionInfo structure you think you will need. It is in defs.h file. */
+
+glm::vec3 Triangle::getNormal()
+{
+	glm::vec3 point1vec = pScene->vertices[point1];
+	glm::vec3 point2vec = pScene->vertices[point2];
+	glm::vec3 point3vec = pScene->vertices[point3];
+	glm::vec3 crossProduct = glm::cross((point2vec - point1vec), (point3vec - point1vec));
+	glm::vec3 normal = glm::normalize(crossProduct);
+	faceNormal = normal;
+	return normal;
+}
 
 Mesh::Mesh()
 {}
@@ -350,8 +400,8 @@ IntersectionInfo Triangle::intersect(const Ray& ray, Ray* rayTransformed)
 		returnValue.intersectionPoint = ray.getPoint(t);
 		if (shadingMode == SmoothShading)
 		{
-			glm::vec3 crossProduct = glm::cross((point2vec - point1vec), (point3vec - point1vec));
-			returnValue.hitNormal = glm::normalize(crossProduct);
+			
+			returnValue.hitNormal = glm::normalize((1-beta-gamma)*normal1+ beta*normal2+gamma*normal3);
 		}
 		else
 		{

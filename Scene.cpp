@@ -17,11 +17,13 @@ void Scene::initScene()
 		if(obj->shapeType == MeshType)
 		{
 			Mesh* mesh = (Mesh*)obj;
+	
 			for (Triangle* const tris : mesh->faces)
 			{
 				tris->getBounds();
 				tris->initTransformatrix();
 			}
+			mesh->calculateFaceNormals();
 		}
 	}
 	boundingVolume = new BoundingVolume(objects);

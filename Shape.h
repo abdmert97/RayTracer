@@ -150,10 +150,16 @@ public:
 	Triangle(int id, int matIndex, int textureIndex, int textureIndex2, Material* material, int p1Index, int p2Index, int p3Index, vector<glm::vec3> *vertices, ShapeType type, vector<std::pair<char, int>> transformations, glm::vec3 motionBlur, ShadingMode shadingMode);	// Constructor
 	IntersectionInfo intersect(const Ray & ray, Ray* rayTransformed = nullptr) ; // Will take a ray and return a structure related to the intersection information. You will implement this.
 	BoundingBox* getBounds();
-private:
+
     int point1;
     int point2;
     int point3;
+	glm::vec3 faceNormal;
+	glm::vec3 normal1;
+	glm::vec3 normal2;
+	glm::vec3 normal3;
+	glm::vec3 getNormal();
+
 
 };
 
@@ -168,7 +174,8 @@ public:
 	IntersectionInfo intersect(const Ray & ray, Ray* rayTransformed = nullptr) ; // Will take a ray and return a structure related to the intersection information. You will implement this.
 	BoundingBox* getBounds();
 	const vector<Triangle*> faces;
-	 
+	void calculateFaceNormals();
+	
 };
 
 #endif
