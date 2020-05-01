@@ -116,6 +116,84 @@ public:
 			return getPerlinColor(textCoord,hitPoint);
 		return getStandardTextColor(textCoord);
 	}
+	float perlinColor(glm::vec3 iP)
+	{
+		float value = 0;
+
+
+		iP *= noiseScale;
+		glm::vec3 p0 = glm::vec3(floor(iP.x), floor(iP.y), floor(iP.z));
+		glm::vec3 p1 = glm::vec3(floor(iP.x + 1), floor(iP.y), floor(iP.z));
+		glm::vec3 p2 = glm::vec3(floor(iP.x), floor(iP.y + 1), floor(iP.z));
+		glm::vec3 p3 = glm::vec3(floor(iP.x + 1), floor(iP.y + 1), floor(iP.z));
+		glm::vec3 p4 = glm::vec3(floor(iP.x), floor(iP.y), floor(iP.z + 1));
+		glm::vec3 p5 = glm::vec3(floor(iP.x + 1), floor(iP.y), floor(iP.z + 1));
+		glm::vec3 p6 = glm::vec3(floor(iP.x), floor(iP.y + 1), floor(iP.z + 1));
+		glm::vec3 p7 = glm::vec3(floor(iP.x + 1), floor(iP.y + 1), floor(iP.z + 1));
+		glm::vec3 v0 = iP - p0;
+		glm::vec3 v1 = iP - p1;
+		glm::vec3 v2 = iP - p2;
+		glm::vec3 v3 = iP - p3;
+		glm::vec3 v4 = iP - p4;
+		glm::vec3 v5 = iP - p5;
+		glm::vec3 v6 = iP - p6;
+		glm::vec3 v7 = iP - p7;
+
+
+		value = glm::dot(v0, randomVectors(p0)) * W(v0.x) * W(v0.y) * W(v0.z) +
+			glm::dot(v1, randomVectors(p1)) * W(v1.x) * W(v1.y) * W(v1.z) +
+			glm::dot(v2, randomVectors(p2)) * W(v2.x) * W(v2.y) * W(v2.z) +
+			glm::dot(v3, randomVectors(p3)) * W(v3.x) * W(v3.y) * W(v3.z) +
+			glm::dot(v4, randomVectors(p4)) * W(v4.x) * W(v4.y) * W(v4.z) +
+			glm::dot(v5, randomVectors(p5)) * W(v5.x) * W(v5.y) * W(v5.z) +
+			glm::dot(v6, randomVectors(p6)) * W(v6.x) * W(v6.y) * W(v6.z) +
+			glm::dot(v7, randomVectors(p7)) * W(v7.x) * W(v7.y) * W(v7.z);
+
+		return value;
+	}
+	float perlinColorConverted(glm::vec3 iP)
+	{
+		float value = 0;
+
+
+		iP *= noiseScale;
+		glm::vec3 p0 = glm::vec3(floor(iP.x), floor(iP.y), floor(iP.z));
+		glm::vec3 p1 = glm::vec3(floor(iP.x + 1), floor(iP.y), floor(iP.z));
+		glm::vec3 p2 = glm::vec3(floor(iP.x), floor(iP.y + 1), floor(iP.z));
+		glm::vec3 p3 = glm::vec3(floor(iP.x + 1), floor(iP.y + 1), floor(iP.z));
+		glm::vec3 p4 = glm::vec3(floor(iP.x), floor(iP.y), floor(iP.z + 1));
+		glm::vec3 p5 = glm::vec3(floor(iP.x + 1), floor(iP.y), floor(iP.z + 1));
+		glm::vec3 p6 = glm::vec3(floor(iP.x), floor(iP.y + 1), floor(iP.z + 1));
+		glm::vec3 p7 = glm::vec3(floor(iP.x + 1), floor(iP.y + 1), floor(iP.z + 1));
+		glm::vec3 v0 = iP - p0;
+		glm::vec3 v1 = iP - p1;
+		glm::vec3 v2 = iP - p2;
+		glm::vec3 v3 = iP - p3;
+		glm::vec3 v4 = iP - p4;
+		glm::vec3 v5 = iP - p5;
+		glm::vec3 v6 = iP - p6;
+		glm::vec3 v7 = iP - p7;
+
+
+		value = glm::dot(v0, randomVectors(p0)) * W(v0.x) * W(v0.y) * W(v0.z) +
+			glm::dot(v1, randomVectors(p1)) * W(v1.x) * W(v1.y) * W(v1.z) +
+			glm::dot(v2, randomVectors(p2)) * W(v2.x) * W(v2.y) * W(v2.z) +
+			glm::dot(v3, randomVectors(p3)) * W(v3.x) * W(v3.y) * W(v3.z) +
+			glm::dot(v4, randomVectors(p4)) * W(v4.x) * W(v4.y) * W(v4.z) +
+			glm::dot(v5, randomVectors(p5)) * W(v5.x) * W(v5.y) * W(v5.z) +
+			glm::dot(v6, randomVectors(p6)) * W(v6.x) * W(v6.y) * W(v6.z) +
+			glm::dot(v7, randomVectors(p7)) * W(v7.x) * W(v7.y) * W(v7.z);
+		if (noiseConversion == Absval)
+		{
+			value = abs(value);
+			
+		}
+		else
+		{
+			value = (value + 1.0) / 2.0;
+		}
+		return value;
+	}
 
 private:
 
@@ -143,41 +221,7 @@ private:
 			cout << optional;
 		cout << "x: " << vect.x << " y: " << vect.y << " z: " << vect.z << endl;
 	}
-	 float perlinColor(glm::vec3 iP)
-	{
-		float value = 0;
 	
-	
-		iP *= noiseScale;
-		glm::vec3 p0 = glm::vec3(floor(iP.x),      floor(iP.y), floor(iP.z));
-		glm::vec3 p1 = glm::vec3(floor(iP.x+1), floor(iP.y), floor(iP.z));
-		glm::vec3 p2 = glm::vec3(floor(iP.x),      floor(iP.y+1),  floor(iP.z));
-		glm::vec3 p3 = glm::vec3(floor(iP.x+1), floor(iP.y+1),  floor(iP.z));
-		glm::vec3 p4 = glm::vec3(floor(iP.x),      floor(iP.y),floor(iP.z+1));
-		glm::vec3 p5 = glm::vec3(floor(iP.x+1), floor(iP.y),floor(iP.z+1));
-		glm::vec3 p6 = glm::vec3(floor(iP.x),      floor(iP.y+1), floor(iP.z+1));
-		glm::vec3 p7 = glm::vec3(floor(iP.x+1), floor(iP.y+1), floor(iP.z+1));
-		glm::vec3 v0 = iP - p0;
-		glm::vec3 v1 = iP - p1;
-		glm::vec3 v2 = iP - p2;
-		glm::vec3 v3 = iP - p3;
-		glm::vec3 v4 = iP - p4;
-		glm::vec3 v5 = iP - p5;
-		glm::vec3 v6 = iP - p6;
-		glm::vec3 v7 = iP - p7;
-	
-
-		value = glm::dot(v0, randomVectors(p0)) * W(v0.x) * W(v0.y) * W(v0.z) +
-			    glm::dot(v1, randomVectors(p1)) * W(v1.x) * W(v1.y) * W(v1.z) +
-			    glm::dot(v2, randomVectors(p2)) * W(v2.x) * W(v2.y) * W(v2.z) +
-			    glm::dot(v3, randomVectors(p3)) * W(v3.x) * W(v3.y) * W(v3.z) +
-			    glm::dot(v4, randomVectors(p4)) * W(v4.x) * W(v4.y) * W(v4.z) +
-			    glm::dot(v5, randomVectors(p5)) * W(v5.x) * W(v5.y) * W(v5.z) +
-			    glm::dot(v6, randomVectors(p6)) * W(v6.x) * W(v6.y) * W(v6.z) +
-			    glm::dot(v7, randomVectors(p7)) * W(v7.x) * W(v7.y) * W(v7.z);
-	
-		return value;
-	}			
 	
 	glm::vec3 randomVectors(glm::vec3 hitpoint)
 	{

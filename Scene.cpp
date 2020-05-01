@@ -1103,9 +1103,9 @@ void Scene::readTextureXml(const char*& str, XMLError& eResult, XMLElement*& pEl
 			InterpolationType interpolationType = Bilinear;
 			DecalMode decalMode = ReplaceKD;
 			NoiseConversion noiseConversion = Absval;
-			float bumpFactor = 0;
-			int normalizer= 0;
-			float noiseScale = 0;
+			float bumpFactor = 1;
+			int normalizer= 255;
+			float noiseScale = 1;
 			eResult = maps->QueryIntAttribute("id", &id);
 			const char* type = maps->Attribute("type");
 			

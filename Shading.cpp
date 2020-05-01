@@ -94,12 +94,12 @@ bool Shading::isShadow(glm::vec3& lightPosition, glm::vec3& intersectionPoint)co
 void Shading::calculateTextureColor(IntersectionInfo& closestObjectInfo, Material material,int textureIndex, int textureIndex2, PointLight* light, glm::vec3 lightVector, glm::vec3 cameraVectorNormalized, glm::vec3& shaders) const
 {
 	TextureMap *map = pScene->textureMaps[textureIndex];
-	TextureMap* map2;
+	TextureMap* map2 = pScene->textureMaps[textureIndex];
 	if(textureIndex2 != -1)
 	{
 		map2 = pScene->textureMaps[textureIndex2];
 	}
- 
+	glm::vec3 normal = closestObjectInfo.hitNormal;
 
 	glm::vec3 lightVectorNormalized = normalize(lightVector);
 	glm::vec3 intensity = light->computeLightContribution(closestObjectInfo.intersectionPoint);
@@ -111,10 +111,6 @@ void Shading::calculateTextureColor(IntersectionInfo& closestObjectInfo, Materia
 	{
 		glm::vec3 textureColor = map->getTextureColor(closestObjectInfo.textCoord,closestObjectInfo.intersectionPoint);
 
-		if (textureColor.r > 1 || textureColor.r < -1)
-		{
-			cout << textureColor.r << endl;
-		}
 		if(map->noiseConversion == Absval)
 		{
 			textureColor = glm::vec3(abs(textureColor.r));
@@ -128,19 +124,32 @@ void Shading::calculateTextureColor(IntersectionInfo& closestObjectInfo, Materia
 			textureColor = glm::vec3(col);
 	
 		}
-		material.diffuseRef = textureColor;
-		diffuseShade = diffuseShading(lightVectorNormalized, material, intensity, closestObjectInfo.hitNormal);
-		blinnPhongShade = blinnPhongShading(lightVectorNormalized, cameraVectorNormalized, material, intensity, closestObjectInfo.hitNormal);
+		if (map->decalMode == BumpNormal)
+		{
+
+			glm::vec3 gradient = glm::vec3(closestObjectInfo.TBN[0][0], closestObjectInfo.TBN[1][0],
+				closestObjectInfo.TBN[2][0]);
+			glm::vec3 bumpNormal = closestObjectInfo.hitNormal- gradient*map->bumpFactor;
+			bumpNormal = glm::normalize(bumpNormal);
+			normal = bumpNormal;
+			
+
+		}
+		else if (map->decalMode == ReplaceKD)
+		{
+			material.diffuseRef = textureColor;
+		}
+
 		
 	}
 	else
 	{
+		
 		glm::vec3 textureColor = map->getTextureColor(closestObjectInfo.textCoord);
 		if (map->decalMode == ReplaceKD)
 		{
 			material.diffuseRef = textureColor / glm::vec3(map->normalizer);
-			diffuseShade = diffuseShading(lightVectorNormalized, material, intensity, closestObjectInfo.hitNormal);
-			blinnPhongShade = blinnPhongShading(lightVectorNormalized, cameraVectorNormalized, material, intensity, closestObjectInfo.hitNormal);
+
 		}
 		else if (map->decalMode == ReplaceNormal)
 		{
@@ -148,25 +157,21 @@ void Shading::calculateTextureColor(IntersectionInfo& closestObjectInfo, Materia
 
 			norm = glm::normalize(multiplyMatrixWithVec3(closestObjectInfo.TBN, norm));
 
-			diffuseShade = diffuseShading(lightVectorNormalized, material, intensity, norm);
-			blinnPhongShade = blinnPhongShading(lightVectorNormalized, cameraVectorNormalized, material, intensity, norm);
+			normal = norm;
 
 		}
 		else if (map->decalMode == BlendKD)
 		{
 
-			diffuseShade = diffuseShading(lightVectorNormalized, material, intensity, closestObjectInfo.hitNormal);
-			blinnPhongShade = blinnPhongShading(lightVectorNormalized, cameraVectorNormalized, material, intensity, closestObjectInfo.hitNormal);
-			material.diffuseRef = textureColor / glm::vec3(255);
-
+		
+			material.diffuseRef += (textureColor / glm::vec3(255));
+			material.diffuseRef /= 2;
 			
-			diffuseShade += diffuseShading(lightVectorNormalized, material, intensity, closestObjectInfo.hitNormal);
-			blinnPhongShade += blinnPhongShading(lightVectorNormalized, cameraVectorNormalized, material, intensity, closestObjectInfo.hitNormal);
-			diffuseShade /= 2;
-			blinnPhongShade /= 2;
+	
 		}
 		else if (map->decalMode == BumpNormal)
 		{
+			
 			glm::vec3 P_u = glm::vec3( closestObjectInfo.TBN[0][0],closestObjectInfo.TBN[1][0],
 			closestObjectInfo.TBN[2][0] );
 			glm::vec3 P_v = glm::vec3(closestObjectInfo.TBN[0][1], closestObjectInfo.TBN[1][1],
@@ -176,12 +181,93 @@ void Shading::calculateTextureColor(IntersectionInfo& closestObjectInfo, Materia
 			glm::vec3 B_v = map->getTextureColor(closestObjectInfo.textCoord + glm::vec2(0, eps)) - textureColor;;
 			glm::vec3 bumpNormal = closestObjectInfo.hitNormal + B_v * (glm::cross(P_u, closestObjectInfo.hitNormal)) + B_u * (glm::cross(P_v, closestObjectInfo.hitNormal));
 			bumpNormal = glm::normalize(bumpNormal);	
-			diffuseShade = diffuseShading(lightVectorNormalized, material, intensity, bumpNormal);
-			blinnPhongShade = blinnPhongShading(lightVectorNormalized, cameraVectorNormalized, material, intensity, bumpNormal);
+			normal = bumpNormal;
+		}
+	}
+	if(textureIndex2!= -1)
+	{
+		if (map2->textureType == Perlin)
+		{
+			glm::vec3 textureColor = map2->getTextureColor(closestObjectInfo.textCoord, closestObjectInfo.intersectionPoint);
+
+			if (map2->noiseConversion == Absval)
+			{
+				textureColor = glm::vec3(abs(textureColor.r));
+			}
+			else
+			{
+				float col = textureColor.r;
+
+				col = (col + 1.0) / 2.0;
+
+				textureColor = glm::vec3(col);
+
+			}
+	
+			if (map2->decalMode == BumpNormal)
+			{
+				
+					glm::vec3 gradient = glm::vec3(closestObjectInfo.TBN[0][0], closestObjectInfo.TBN[1][0],
+						closestObjectInfo.TBN[2][0]);
+					glm::vec3 bumpNormal = closestObjectInfo.hitNormal - gradient;
+					bumpNormal = glm::normalize(bumpNormal);
+					normal = bumpNormal;
+					cout << "here" << endl;
+				
+			}
+			else if (map2->decalMode == ReplaceKD)
+			{
+				material.diffuseRef = textureColor;
+			}
+		}
+		else
+		{
+
+			glm::vec3 textureColor = map2->getTextureColor(closestObjectInfo.textCoord);
+			if (map2->decalMode == ReplaceKD)
+			{
+				material.diffuseRef = textureColor / glm::vec3(map2->normalizer);
+
+			}
+			else if (map2->decalMode == ReplaceNormal)
+			{
+				glm::vec3 norm = textureColor / glm::vec3(255) - glm::vec3(0.5);
+
+				norm = glm::normalize(multiplyMatrixWithVec3(closestObjectInfo.TBN, norm));
+
+				normal = norm;
+
+			}
+			else if (map2->decalMode == BlendKD)
+			{
+
+
+				material.diffuseRef += (textureColor / glm::vec3(255));
+				material.diffuseRef /= 2;
+
+			
+			}
+			else if (map2->decalMode == BumpNormal)
+			{
+				
+					glm::vec3 P_u = glm::vec3(closestObjectInfo.TBN[0][0], closestObjectInfo.TBN[1][0],
+						closestObjectInfo.TBN[2][0]);
+					glm::vec3 P_v = glm::vec3(closestObjectInfo.TBN[0][1], closestObjectInfo.TBN[1][1],
+						closestObjectInfo.TBN[2][1]);
+					float eps = 0.00002;
+					glm::vec3 B_u = map2->getTextureColor(closestObjectInfo.textCoord + glm::vec2(eps, 0)) - textureColor;
+					glm::vec3 B_v = map2->getTextureColor(closestObjectInfo.textCoord + glm::vec2(0, eps)) - textureColor;;
+					glm::vec3 bumpNormal = closestObjectInfo.hitNormal + B_v * (glm::cross(P_u, closestObjectInfo.hitNormal)) + B_u * (glm::cross(P_v, closestObjectInfo.hitNormal));
+					bumpNormal = glm::normalize(bumpNormal);
+					normal = bumpNormal;
+				
+			
+			}
 		}
 	}
 	
-	
+	diffuseShade = diffuseShading(lightVectorNormalized, material, intensity, normal);
+	blinnPhongShade = blinnPhongShading(lightVectorNormalized, cameraVectorNormalized, material, intensity, normal);
 	shaders = diffuseShade + blinnPhongShade;
 
 
