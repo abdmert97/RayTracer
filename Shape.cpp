@@ -70,7 +70,7 @@ Shape::Shape(int id, int matIndex, int textureIndex, int textureIndex2,Material 
 {
 	bounds = nullptr;
 	isTransformed = glm::length(motionBlur) || transformations.size() != 0 ? true : false;
-	cout << textureIndex << " " << textureIndex2 << endl;
+	
 }
 
 Sphere::Sphere(void)
@@ -229,14 +229,34 @@ IntersectionInfo Sphere::intersect(const Ray& ray, Ray* rayTransformed)
 		x = hitPoint.x;
 		y = hitPoint.y;
 		z = hitPoint.z;
-		float cos = -y/radius;
+		float cosi = y/radius;
 
-		float theta = acosf(cos);
+		float theta = acosf(cosi);
 		float fi = atan2(-z, x);
 		
 		returnValue.textCoord.x = (fi + PI) / (2 * PI);
 		returnValue.textCoord.y = theta/PI;
+		
+		if (pScene->textureMaps[textureIndex]->decalMode == ReplaceNormal || pScene->textureMaps[textureIndex]->decalMode == BumpNormal ||
+			(textureIndex2 != -1 && (pScene->textureMaps[textureIndex2]->decalMode == ReplaceNormal || pScene->textureMaps[textureIndex2]->decalMode == BumpNormal)))
+		{
+			glm::vec3 tangent, bitangent;
+			tangent = glm::vec3(-radius*cos(theta)*sin(fi), 0, radius * cos(theta)*cos(fi));
+	
+			bitangent = glm::cross(returnValue.hitNormal, tangent);
+			if(pScene->textureMaps[textureIndex]->decalMode == ReplaceNormal)
+			{
+				tangent = glm::normalize(tangent);
+				bitangent = glm::normalize(bitangent);
+			}
 
+			returnValue.TBN = glm::mat3x3(tangent.x, bitangent.x, returnValue.hitNormal.x,
+				tangent.y, bitangent.y, returnValue.hitNormal.y,
+				tangent.z, bitangent.z, returnValue.hitNormal.z
+			);
+			
+		}
+		
 
 	
 	}
@@ -327,8 +347,9 @@ IntersectionInfo Triangle::intersect(const Ray& ray, Ray* rayTransformed)
 			glm::vec2 textCoord2 = pScene->textCoord[point2];
 			glm::vec2 textCoord3 = pScene->textCoord[point3];
 			returnValue.textCoord = (1 - beta - gamma) * textCoord1 + beta * textCoord2 + gamma * textCoord3;
-
-			if (pScene->textureMaps[textureIndex]->decalMode == ReplaceNormal)
+	
+			if (pScene->textureMaps[textureIndex]->decalMode == ReplaceNormal || pScene->textureMaps[textureIndex]->decalMode == BumpNormal||
+				(textureIndex2 != -1 &&(pScene->textureMaps[textureIndex2]->decalMode == ReplaceNormal || pScene->textureMaps[textureIndex2]->decalMode == BumpNormal)))
 			{
 				
 				glm::vec3 edge1 = point2vec - point1vec;
@@ -342,14 +363,18 @@ IntersectionInfo Triangle::intersect(const Ray& ray, Ray* rayTransformed)
 				tangent.x = f * (deltaUV2.y * edge1.x - deltaUV1.y * edge2.x);
 				tangent.y = f * (deltaUV2.y * edge1.y - deltaUV1.y * edge2.y);
 				tangent.z = f * (deltaUV2.y * edge1.z - deltaUV1.y * edge2.z);
-				tangent = glm::normalize(tangent);
+			
 
 				bitangent.x = f * (-deltaUV2.x * edge1.x + deltaUV1.x * edge2.x);
 				bitangent.y = f * (-deltaUV2.x * edge1.y + deltaUV1.x * edge2.y);
 				bitangent.z = f * (-deltaUV2.x * edge1.z + deltaUV1.x * edge2.z);
-				bitangent = glm::normalize(bitangent);
 			
-
+			
+				if (pScene->textureMaps[textureIndex]->decalMode == ReplaceNormal)
+				{
+					tangent = glm::normalize(tangent);
+					bitangent = glm::normalize(bitangent);
+				}
 			
 				returnValue.TBN = glm::mat3x3( tangent.x,bitangent.x,returnValue.hitNormal.x ,
 									tangent.y,bitangent.y,returnValue.hitNormal.y ,

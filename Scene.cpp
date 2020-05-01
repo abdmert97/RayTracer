@@ -203,8 +203,17 @@ void Scene::renderImagePart(float start, float end, Camera* camera, Image* image
 							 int time = pow(sample,2) - pow(abs(i - sample / 2),2) - pow(abs(j - sample / 2),2);
 					
 							 total += time;
+							for (TextureMap * map : textureMaps)
+							{
+								if(map->decalMode == ReplaceBG)
+								{
+									float u = (float)w / camera->imgPlane.nx;
+									float v = (float)h / camera->imgPlane.ny;
+									
+									totalColor += map->getTextureColor(glm::vec2(u,v))* glm::vec3(time);
+								}
+							}
 							
-							 totalColor += (backgroundColor*glm::vec3(time));
 						
 						}
 						else // if ray hits an object
@@ -239,12 +248,19 @@ void Scene::renderImagePart(float start, float end, Camera* camera, Image* image
 				IntersectionInfo closestObjectReturnVal = closestObject(ray);
 				if (closestObjectReturnVal.objectID == -1) // ray hits nothing
 				{
-					// Set background Color 
-					Color background = { (unsigned char)backgroundColor.r,(unsigned char)backgroundColor.g,(unsigned char)backgroundColor.b };
-					background.red = background.red > 255 ? 255 : background.red;
-					background.grn = background.grn > 255 ? 255 : background.grn;
-					background.blu = background.blu > 255 ? 255 : background.blu;
-					image->setPixelValue(w, h, background);
+					Color color;
+						for (TextureMap * map : textureMaps)
+							{
+								if(map->decalMode == ReplaceBG)
+								{
+									float u = (float)w / camera->imgPlane.nx;
+									float v = (float)h / camera->imgPlane.ny;
+
+									glm::vec3 colorVec = map->getTextureColor(glm::vec2(u, v));
+									 color = Color{ (unsigned int)colorVec.x,(unsigned int)colorVec.y,(unsigned int)colorVec.z };
+								}
+							}
+					image->setPixelValue(w, h, color);
 				}
 				else // if ray hits an object
 				{
@@ -275,9 +291,15 @@ void Scene::readConstants(const char*& str, XMLError& eResult, XMLElement*& pEle
 		pElement->QueryIntText(&maxRecursionDepth);
 	
 	pElement = pRoot->FirstChildElement("BackgroundColor");
-	str = pElement->GetText();
-	sscanf(str, "%f %f %f", &backgroundColor.r, &backgroundColor.g, &backgroundColor.b);
-
+	if(pElement)
+	{
+		str = pElement->GetText();
+		sscanf(str, "%f %f %f", &backgroundColor.r, &backgroundColor.g, &backgroundColor.b);
+	}
+	else
+	{
+		backgroundColor = glm::vec3(0);
+	}
 	pElement = pRoot->FirstChildElement("ShadowRayEpsilon");
 	if (pElement != nullptr)
 		pElement->QueryFloatText(&shadowRayEps);
@@ -623,7 +645,8 @@ void Scene::readMeshes(const char*& str, XMLError& eResult, XMLElement*& pElemen
 		int vertexOffset = 0;
 		vector<Triangle*> faces;
 		vector<int>* meshIndices = new vector<int>;
-
+	
+		int textureOffset = 0;
 		glm::vec3 motionBlur = glm::vec3(0);
 
 		eResult = pObject->QueryIntAttribute("id", &id);
@@ -663,6 +686,10 @@ void Scene::readMeshes(const char*& str, XMLError& eResult, XMLElement*& pElemen
 		if(transformList.size()!=0)
 			transformationEnabled = true;
 		objElement = pObject->FirstChildElement("Faces");
+
+	
+		eResult =objElement->QueryIntAttribute("textureOffset", &textureOffset);
+	
 		const char* type = objElement->Attribute("plyFile");
 		if (type != nullptr && type[0] == 'p')
 		{
@@ -817,7 +844,7 @@ void Scene::readSpheres(const char*& str, XMLError& eResult, XMLElement*& pEleme
 
 				while (str[cursor] == ' ' || str[cursor] == '\t' || str[cursor] == '\n')
 					cursor++;
-				cout << transform.first << " first " << transform.second << endl;
+				
 				transformList.push_back(transform);
 			}
 		}
@@ -1139,8 +1166,11 @@ void Scene::readTextureXml(const char*& str, XMLError& eResult, XMLElement*& pEl
 				{
 					decalMode = BumpNormal;
 					mapElement = maps->FirstChildElement("BumpFactor");
-					str = mapElement->GetText();
-					sscanf(str, "%f",&bumpFactor);
+					if(bumpFactor)
+					{
+						str = mapElement->GetText();
+						sscanf(str, "%f",&bumpFactor);
+					}
 				}
 				else if (str[0] == 'r' && str[8] == 'b')
 				{
