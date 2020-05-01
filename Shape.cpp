@@ -256,6 +256,30 @@ IntersectionInfo Sphere::intersect(const Ray& ray, Ray* rayTransformed)
 			);
 			
 		}
+		if ((textureIndex != -1 && pScene->textureMaps[textureIndex]->textureType == Perlin) ||
+			textureIndex2 != -1 && pScene->textureMaps[textureIndex2]->textureType == Perlin)
+		{
+			TextureMap* map = pScene->textureMaps[textureIndex];
+			if (textureIndex2 != -1 && pScene->textureMaps[textureIndex2]->textureType == Perlin)
+				map = pScene->textureMaps[textureIndex2];
+
+			float eps = 0.001;
+			float x = map->perlinColorConverted(returnValue.intersectionPoint + glm::vec3(eps, 0, 0)) - map->perlinColorConverted(returnValue.intersectionPoint);
+			float y = map->perlinColorConverted(returnValue.intersectionPoint + glm::vec3(0, eps, 0)) - map->perlinColorConverted(returnValue.intersectionPoint);
+			float z = map->perlinColorConverted(returnValue.intersectionPoint + glm::vec3(0, 0, eps)) - map->perlinColorConverted(returnValue.intersectionPoint);
+
+
+			glm::vec3 gradient = glm::vec3(x / eps, y / eps, z / eps);
+
+			float gP = glm::dot(gradient, returnValue.hitNormal);
+
+			glm::vec3 newGradient = gradient - glm::dot(gradient, returnValue.hitNormal) * returnValue.hitNormal;
+
+			returnValue.TBN = glm::mat3x3(newGradient.x, newGradient.x, returnValue.hitNormal.x,
+				newGradient.y, newGradient.y, returnValue.hitNormal.y,
+				newGradient.z, newGradient.z, returnValue.hitNormal.z
+			);
+		}
 		
 
 	

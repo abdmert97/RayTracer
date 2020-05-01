@@ -1166,10 +1166,11 @@ void Scene::readTextureXml(const char*& str, XMLError& eResult, XMLElement*& pEl
 				{
 					decalMode = BumpNormal;
 					mapElement = maps->FirstChildElement("BumpFactor");
-					if(bumpFactor)
+					if(mapElement)
 					{
 						str = mapElement->GetText();
 						sscanf(str, "%f",&bumpFactor);
+						cout << bumpFactor << endl;
 					}
 				}
 				else if (str[0] == 'r' && str[8] == 'b')
