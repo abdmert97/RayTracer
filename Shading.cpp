@@ -139,7 +139,12 @@ void Shading::calculateTextureColor(IntersectionInfo& closestObjectInfo, Materia
 		{
 			material.diffuseRef = textureColor;
 		}
+		if (map->decalMode == ReplaceALL)
+		{
+			shaders = textureColor;
+			return;
 
+		}
 		
 	}
 	else
@@ -225,11 +230,23 @@ void Shading::calculateTextureColor(IntersectionInfo& closestObjectInfo, Materia
 			{
 				material.diffuseRef = textureColor;
 			}
+			if (map->decalMode == ReplaceALL)
+			{
+				shaders = textureColor;
+				return;
+
+			}
 		}
 		else
 		{
 
 			glm::vec3 textureColor = map2->getTextureColor(closestObjectInfo.textCoord);
+			if (map->decalMode == ReplaceALL)
+			{
+				shaders = textureColor;
+				return;
+
+			}
 			if (map2->decalMode == ReplaceKD)
 			{
 				material.diffuseRef = textureColor / glm::vec3(map2->normalizer);
@@ -261,8 +278,8 @@ void Shading::calculateTextureColor(IntersectionInfo& closestObjectInfo, Materia
 					glm::vec3 P_v = glm::vec3(closestObjectInfo.TBN[0][1], closestObjectInfo.TBN[1][1],
 						closestObjectInfo.TBN[2][1]) * map->bumpFactor;
 					float eps = 0.00002;
-					glm::vec3 B_u = map2->getTextureColor(closestObjectInfo.textCoord + glm::vec2(eps, 0)) - textureColor;
-					glm::vec3 B_v = map2->getTextureColor(closestObjectInfo.textCoord + glm::vec2(0, eps)) - textureColor;;
+					glm::vec3 B_u = map2->getTextureColor(closestObjectInfo.textCoord - glm::vec2(eps, 0)) - textureColor;
+					glm::vec3 B_v = map2->getTextureColor(closestObjectInfo.textCoord - glm::vec2(0, eps)) - textureColor;;
 					glm::vec3 bumpNormal = closestObjectInfo.hitNormal + B_v * (glm::cross(P_u, closestObjectInfo.hitNormal)) + B_u * (glm::cross(P_v, closestObjectInfo.hitNormal));
 					bumpNormal = glm::normalize(bumpNormal);
 					normal = bumpNormal;

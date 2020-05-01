@@ -43,7 +43,7 @@ public:
 	{
 		
 		size_t index = (y * width + x);
-
+		
 		return color[index];
 	}
 };
