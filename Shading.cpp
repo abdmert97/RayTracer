@@ -188,8 +188,8 @@ void Shading::calculateTextureColor(IntersectionInfo& closestObjectInfo, Materia
 			glm::vec3 P_v = glm::vec3(closestObjectInfo.TBN[0][1], closestObjectInfo.TBN[1][1],
 				closestObjectInfo.TBN[2][1]) * map->bumpFactor;
 			float eps = 0.00002;			
-			glm::vec3 B_u = (map->getTextureColor(closestObjectInfo.textCoord+glm::vec2(eps,0))-textureColor     );
-			glm::vec3 B_v = (map->getTextureColor(closestObjectInfo.textCoord + glm::vec2(0, eps)) - textureColor);;
+			glm::vec3 B_u = (map->getTextureColor(closestObjectInfo.textCoord-glm::vec2(eps,0))-textureColor);
+			glm::vec3 B_v = (map->getTextureColor(closestObjectInfo.textCoord- glm::vec2(0, eps)) - textureColor);;
 			glm::vec3 bumpNormal = closestObjectInfo.hitNormal + B_v * (glm::cross(P_u, closestObjectInfo.hitNormal)) + B_u * (glm::cross(P_v, closestObjectInfo.hitNormal));
 			bumpNormal = glm::normalize(bumpNormal);	
 			normal = bumpNormal;
