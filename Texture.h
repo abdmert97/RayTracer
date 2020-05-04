@@ -238,11 +238,12 @@ private:
 	glm::vec3 bilinearInterpolation(const glm::vec2& textCoord)
 	{
 		
-		glm::vec2 pixelPos = glm::vec2((textCoord.x) * texture->width, textCoord.y * texture->height);
+		glm::vec2 textCoordClamped = glm::vec2(textCoord.x - (int)textCoord.x, textCoord.y - (int)textCoord.y);
+		glm::vec2 pixelPos = glm::vec2(textCoordClamped.x * texture->width, textCoordClamped.y * texture->height);
 	
 		int p = (int)pixelPos.x;
 		int q = (int)pixelPos.y;
-		
+	
 		float dx = pixelPos.x - p;
 		float dy = pixelPos.y - q;
 		return texture->getTextureColor(p, q)*(1 - dx)*(1 - dy) +
@@ -253,7 +254,10 @@ private:
 
 	glm::vec3 nearestInterpolation(const glm::vec2& textCoord)
 	{
-		glm::vec2 pixelPos = glm::vec2(textCoord.x * texture->width, textCoord.y * texture->height);
+	
+	
+		glm::vec2 textCoordClamped = glm::vec2(textCoord.x- (int)textCoord.x, textCoord.y - (int)textCoord.y);
+		glm::vec2 pixelPos = glm::vec2(textCoordClamped.x * texture->width, textCoordClamped.y * texture->height);
 		int p = (int)pixelPos.x;
 		int q = (int)pixelPos.y;
 		return texture->getTextureColor(p, q);

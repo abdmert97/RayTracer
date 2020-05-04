@@ -87,6 +87,7 @@ public:
 
 		return glm::vec4(values[0], values[1], values[2], values[3]);
 	}
+	
 	glm::mat4x4 static multiplyMatrixWithMatrix(glm::mat4x4 m, glm::mat4x4 m2)
 	{
 		double values[4];
@@ -154,12 +155,16 @@ public:
     int point1;
     int point2;
     int point3;
+	int textPoint1;
+	int textPoint2;
+	int textPoint3;
+
 	glm::vec3 faceNormal;
 	glm::vec3 normal1;
 	glm::vec3 normal2;
 	glm::vec3 normal3;
 	glm::vec3 getNormal();
-
+	bool first;
 
 };
 

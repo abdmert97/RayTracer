@@ -208,6 +208,10 @@ Triangle::Triangle(int id, int matIndex, int textureIndex, int textureIndex2, Ma
     point1 = p1Index-1;
     point2 = p2Index-1;
     point3 = p3Index-1;
+	textPoint1 = 0;
+	textPoint2 = 0;
+	textPoint3 = 0;
+	first = false;
 }
 
 /* Triangle-ray intersection routine. You will implement this.
@@ -216,12 +220,17 @@ You should to declare the variables  in IntersectionInfo structure you think you
 
 glm::vec3 Triangle::getNormal()
 {
+	if(first)
+	{
+		return faceNormal;
+	}
 	glm::vec3 point1vec = pScene->vertices[point1];
 	glm::vec3 point2vec = pScene->vertices[point2];
 	glm::vec3 point3vec = pScene->vertices[point3];
 	glm::vec3 crossProduct = glm::cross((point2vec - point1vec), (point3vec - point1vec));
 	glm::vec3 normal = glm::normalize(crossProduct);
 	faceNormal = normal;
+	first = true;
 	return normal;
 }
 
@@ -405,7 +414,7 @@ IntersectionInfo Triangle::intersect(const Ray& ray, Ray* rayTransformed)
 		}
 		else
 		{
-			glm::vec3 crossProduct = glm::cross((point2vec - point1vec), (point3vec - point1vec));
+			glm::vec3 crossProduct = getNormal();
 			returnValue.hitNormal = glm::normalize(crossProduct);
 		}
 
@@ -417,11 +426,12 @@ IntersectionInfo Triangle::intersect(const Ray& ray, Ray* rayTransformed)
 		if(textureIndex != -1&& pScene->textureMaps[textureIndex]->textureType == StandardTexture)
 		{
 	
-			glm::vec2 textCoord1 = pScene->textCoord[point1];
-			glm::vec2 textCoord2 = pScene->textCoord[point2];
-			glm::vec2 textCoord3 = pScene->textCoord[point3];
+			glm::vec2 textCoord1 = pScene->textCoord[textPoint1];
+			glm::vec2 textCoord2 = pScene->textCoord[textPoint2];
+			glm::vec2 textCoord3 = pScene->textCoord[textPoint3];
+		
 			returnValue.textCoord = (1 - beta - gamma) * textCoord1 + beta * textCoord2 + gamma * textCoord3;
-	
+			
 			if (pScene->textureMaps[textureIndex]->decalMode == ReplaceNormal || pScene->textureMaps[textureIndex]->decalMode == BumpNormal||
 				(textureIndex2 != -1 &&(pScene->textureMaps[textureIndex2]->decalMode == ReplaceNormal || pScene->textureMaps[textureIndex2]->decalMode == BumpNormal)))
 			{

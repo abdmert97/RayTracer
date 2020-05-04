@@ -643,6 +643,9 @@ void Scene::readMeshes(const char*& str, XMLError& eResult, XMLElement*& pElemen
 		int p1Index;
 		int p2Index;
 		int p3Index;
+		int tp1Index=1;
+		int tp2Index=1;
+		int tp3Index=1;
 		int cursor = 0;
 		int vertexOffset = 0;
 		vector<Triangle*> faces;
@@ -752,11 +755,20 @@ void Scene::readMeshes(const char*& str, XMLError& eResult, XMLElement*& pElemen
 				for (int cnt = 0; cnt < 3; cnt++)
 				{
 					if (cnt == 0)
+					{
 						p1Index = atoi(str + cursor) + vertexOffset;
+						tp1Index = atoi(str + cursor) + textureOffset;
+					}
 					else if (cnt == 1)
+					{
 						p2Index = atoi(str + cursor) + vertexOffset;
+						tp2Index = atoi(str + cursor) + textureOffset;
+					}
 					else
+					{
 						p3Index = atoi(str + cursor) + vertexOffset;
+						tp3Index = atoi(str + cursor) + textureOffset;
+					}
 					while (str[cursor] != ' ' && str[cursor] != '\t' && str[cursor] != '\n')
 						cursor++;
 					while (str[cursor] == ' ' || str[cursor] == '\t' || str[cursor] == '\n')
@@ -764,7 +776,11 @@ void Scene::readMeshes(const char*& str, XMLError& eResult, XMLElement*& pElemen
 				}
 
 				Material* material = materials[matIndex - 1];
-				faces.push_back((new Triangle(id, matIndex - 1,text1,text2, material, p1Index, p2Index, p3Index, &vertices, TriangleShape, transformList,motionBlur,shadingMode)));
+				Triangle* tris = (new Triangle(id, matIndex - 1, text1, text2, material, p1Index, p2Index, p3Index, &vertices, TriangleShape, transformList, motionBlur, shadingMode));
+				tris->textPoint1 = tp1Index-1;
+				tris->textPoint2 = tp2Index-1;
+				tris->textPoint3 = tp3Index-1;
+				faces.push_back(tris);
 				meshIndices->push_back(p1Index);
 				meshIndices->push_back(p2Index);
 				meshIndices->push_back(p3Index);
