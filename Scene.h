@@ -17,6 +17,7 @@
 #include "Shading.h"
 #include "Node.h"
 #include "Texture.h"
+
 // Forward declarations to avoid cyclic references
 class Shape;
 class Triangle;
@@ -142,6 +143,7 @@ private:
 	void readObjects(const char*& str, XMLError& eResult, XMLElement*& pElement, XMLNode* pRoot);
 	void readLights(const char*& str, XMLError& eResult, XMLElement*& pElement, XMLNode* pRoot);
 	void readTextureXml(const char*& str, XMLError& eResult, XMLElement*& pElement, XMLNode* pRoot);
+	void readExr(const char* input);
 	// Read XML
 
 	int cameraCount;

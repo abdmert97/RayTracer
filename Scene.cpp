@@ -3,7 +3,8 @@
 #define PI 3.14159265
 #define STB_IMAGE_IMPLEMENTATION   
 #include "stb/stb_image.h"	
-
+#define TINYEXR_IMPLEMENTATION
+#include "tinyexr.h"
 void Scene::initScene()
 {
 	setScene();
@@ -555,6 +556,8 @@ void Scene::readTransformations(const char*& str, XMLError& eResult, XMLElement*
 void Scene::readVertices(const char*& str, XMLElement*& pElement, XMLNode* pRoot)
 {
 	pElement = pRoot->FirstChildElement("VertexData");
+	if (pElement == nullptr)
+		return;
 	int cursor = 0;
 	glm::vec3 tmpPoint;
 	str = pElement->GetText();
@@ -699,7 +702,7 @@ void Scene::readMeshes(const char*& str, XMLError& eResult, XMLElement*& pElemen
 		if (type != nullptr && type[0] == 'p')
 		{
 
-			const string filePath = "hw3/" + (string)type;
+			const string filePath = "hw5/" + (string)type;
 		
 			happly::PLYData plyIn(filePath);
 			int currID = vertices.size();
@@ -1234,6 +1237,27 @@ void Scene::readTextureXml(const char*& str, XMLError& eResult, XMLElement*& pEl
 	}
 	
 }
+
+void Scene::readExr(const char* input)
+{
+	float* out; // width * height * RGBA
+	int width;
+	int height;
+	const char* err = NULL; // or nullptr in C++11
+
+	int ret = LoadEXR(&out, &width, &height, input, &err);
+	if (ret != TINYEXR_SUCCESS) {
+		if (err) {
+			fprintf(stderr, "ERR : %s\n", err);
+			FreeEXRErrorMessage(err); // release memory of error message.
+		}
+	}
+	else {
+		cout << "succss" << endl;
+		free(out); // release memory of image data
+	}
+}
+
 void Scene::readXML(const char* xmlPath)
 {
 	const char* str;
@@ -1251,25 +1275,26 @@ void Scene::readXML(const char* xmlPath)
 	readConstants(str, eResult, pElement, pRoot);
 	// Parse cameras
 	readCamera(str, eResult, pElement, pRoot);
-	
+
 	// Parse materals
 	readMaterials(str, eResult, pElement, pRoot);
 	
 	// Parse transformations
 	readTransformations(str, eResult, pElement, pRoot);
 
-	
+
 	// Parse vertex data
 	readVertices(str, pElement, pRoot);
-
-	readTextCoord(str, pElement, pRoot);
 	
+	readTextCoord(str, pElement, pRoot);
+
 	readObjects(str, eResult, pElement, pRoot);
 	
 	// Parse lights
 	readLights(str, eResult, pElement, pRoot);
 	// Read textures
 	readTextureXml(str, eResult, pElement, pRoot);
+
 }
 
 void Scene::BoundingBoxIntersection(Ray ray, Node* node, IntersectionInfo* retVal)
