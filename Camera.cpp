@@ -1,16 +1,23 @@
 #include "Camera.h"
 
+
+
 extern Scene* pScene;
 using namespace std;
 Camera::Camera(int id,                      // Id of the camera
-               const char* imageName,       // Name of the output PPM file
-               const glm::vec3& pos,         // Camera position
-               const glm::vec3& gaze,        // Camera gaze direction
-               const glm::vec3& up,          // Camera up direction
-               const ImagePlane& imgPlane,
-			   int sample,
-	           float apertureSize,
-	           float focusDistance)  // Image plane parameters
+	const char* imageName,       // Name of the output PPM file
+	const glm::vec3& pos,         // Camera position
+	const glm::vec3& gaze,        // Camera gaze direction
+	const glm::vec3& up,          // Camera up direction
+	const ImagePlane& imgPlane,
+	int sample,
+	float apertureSize,
+	float focusDistance,
+	float keyValue =-1,
+	float burnPercent=-1,
+	float saturation=-1,
+	float gamma=-1,
+	TMO tmo = Photographic)  // Image plane parameters
 {
     this->id  = id;
     int i = 0;
@@ -30,6 +37,11 @@ Camera::Camera(int id,                      // Id of the camera
 	this->apertureSize = apertureSize;
 	this->focusDistance = focusDistance;
 	imgPostion = gaze * imgPlane.distance;
+	this->keyValue = keyValue;
+	this->burnPercent = burnPercent;
+	this->saturation =  saturation;
+	this->gamma =  gamma;
+	this->tmo = Photographic; tmo = Photographic;
 }
 
 /* Takes coordinate of an image pixel as row and col, and

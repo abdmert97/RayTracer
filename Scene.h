@@ -75,6 +75,7 @@ public:
 	vector<Shape*> objects;			// Vector holding all shapes
 	vector<Texture *> textures;
 	vector<TextureMap*> textureMaps;
+	glm::vec3 **colorMap;
 	Shading* shading;
 	
 	BoundingVolume* boundingVolume;
@@ -120,7 +121,8 @@ private:
 	void renderImage(Camera* camera, Image* image);
 	
 	void initMatrices();
-
+	void toneMapping(Image* image);
+	void saveEXR(float* rgb);
 
 	// Read XML
 	void readConstants(const char*& str, XMLError& eResult, XMLElement*& pElement, XMLNode* pRoot);

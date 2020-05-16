@@ -40,6 +40,8 @@ void Scene::renderScene(void)
 
 		threading(camera, image);
 		//renderImage(camera, image);
+		if (cameras[0]->keyValue > 0)
+			toneMapping(image);
 		image->saveImage(cameras[i]->imageName);
 	}
 }
@@ -85,6 +87,12 @@ void Scene::setScene()
 		ambientLightList[i].z = (mat.ambientRef.z * ambientLight.z);
 	}
 	cameraCount = cameras.size();
+	if(cameras[0]->keyValue>0)
+	{
+		colorMap = new glm::vec3*[cameras[0]->imgPlane.nx];
+		for (int i = 0; i < cameras[0]->imgPlane.nx; ++i)
+			colorMap[i] = new glm::vec3[cameras[0]->imgPlane.ny];
+	}
 }
 void Scene::threading(Camera* camera, Image* image)
 {
@@ -229,7 +237,7 @@ void Scene::renderImagePart(float start, float end, Camera* camera, Image* image
 					   		 shadingColor.x = shadingColor.x > 255 ? 255 : shadingColor.x;
 					   		 shadingColor.y = shadingColor.y > 255 ? 255 : shadingColor.y;
 					   		 shadingColor.z = shadingColor.z > 255 ? 255 : shadingColor.z;
-
+							
 							 int time = pow(sample, 2) - pow(abs(i - sample / 2), 2) - pow(abs(j - sample / 2), 2);
 							
 							 total += time;
@@ -273,11 +281,23 @@ void Scene::renderImagePart(float start, float end, Camera* camera, Image* image
 					shape = objects[closestObjectReturnVal.objectID];
 					glm::vec3 shadingColor = shading->shading(maxRecursionDepth, shape, closestObjectReturnVal, ray);
 					//  cout<<(int)color.red<< " "<<(int)color.grn<< " "<<(int)color.blu<< " "<<endl;
-					shadingColor.x = shadingColor.x > 255 ? 255 : shadingColor.x;
-					shadingColor.y = shadingColor.y > 255 ? 255 : shadingColor.y;
-					shadingColor.z = shadingColor.z > 255 ? 255 : shadingColor.z;
-					Color lastColor = Color{ (unsigned int)shadingColor.x,(unsigned int)shadingColor.y,(unsigned int)shadingColor.z };
-					image->setPixelValue(w, h, lastColor);
+				
+					// 0.2126R + 0.7152G+ 0.0722B;
+					if(camera->keyValue>0)
+					{
+						//float luminance = 0.2126* shadingColor.r + 0.7152* shadingColor.g + 0.0722* shadingColor.b;
+						colorMap[w][h]= shadingColor;
+					
+					}
+					else
+					{
+						shadingColor.x = shadingColor.x > 255 ? 255 : shadingColor.x;
+						shadingColor.y = shadingColor.y > 255 ? 255 : shadingColor.y;
+						shadingColor.z = shadingColor.z > 255 ? 255 : shadingColor.z;
+						Color lastColor = Color{ (unsigned int)shadingColor.x,(unsigned int)shadingColor.y,(unsigned int)shadingColor.z };
+						image->setPixelValue(w, h, lastColor);
+					}
+				
 				}
 			}
 			//	ray.origin    = transformation->inverseRotation(0, vec4(ray.origin, 1));
@@ -311,6 +331,7 @@ void Scene::readConstants(const char*& str, XMLError& eResult, XMLElement*& pEle
 	if (pElement != nullptr)
 		eResult = pElement->QueryFloatText(&intTestEps);
 }
+
 
 void Scene::readCamera(const char*& str, XMLError& eResult, XMLElement*& pElement, XMLNode* pRoot)
 {
@@ -386,7 +407,46 @@ void Scene::readCamera(const char*& str, XMLError& eResult, XMLElement*& pElemen
 			imgPlane.right = 1 * r * height;
 			imgPlane.bottom = -1 * height;
 			imgPlane.top = 1 * height;
-			cameras.push_back(new Camera(id, imageName, pos, forward * glm::vec3(-1), newUp, imgPlane, numberofSample,apertureSize,focusDistance));
+			
+			float keyValue = -1, burnPercent = -1, saturation = -1, gamma = -1;
+			TMO tmo = Photographic;
+			camElement = pCamera->FirstChildElement("Tonemap");
+			if(camElement)
+			{
+				string tmoStr;
+				XMLElement* TMO = camElement->FirstChildElement("TMO");
+				if(TMO != nullptr)
+				{
+					tmoStr = TMO->GetText();
+				
+				}
+				XMLElement* TMOOptions = camElement->FirstChildElement("TMOOptions");
+				if (TMOOptions != nullptr)
+				{
+					str = TMOOptions->GetText();
+				
+					sscanf(str, "%f %f", &keyValue,&burnPercent);
+				
+				}
+				XMLElement* Saturation = camElement->FirstChildElement("Saturation");
+				if (Saturation != nullptr)
+				{
+					str = Saturation->GetText();
+
+					sscanf(str, "%f", &saturation);
+					
+				}
+				XMLElement* Gamma = camElement->FirstChildElement("Gamma");
+				if (Gamma != nullptr)
+				{
+					str = Gamma->GetText();
+
+					sscanf(str, "%f", &gamma);
+
+				}
+			}
+			cameras.push_back(new Camera(id, imageName, pos, forward* glm::vec3(-1), newUp, imgPlane, numberofSample, apertureSize, focusDistance,keyValue,burnPercent,
+			saturation,gamma,tmo));
 		}
 		else
 		{
@@ -422,8 +482,46 @@ void Scene::readCamera(const char*& str, XMLError& eResult, XMLElement*& pElemen
 			camElement = pCamera->FirstChildElement("ImageName");
 			str = camElement->GetText();
 			strcpy(imageName, str);
+			float keyValue = -1, burnPercent = -1, saturation = -1, gamma = -1;
+			TMO tmo = Photographic;
+			camElement = pCamera->FirstChildElement("Tonemap");
+			if (camElement)
+			{
 
-			cameras.push_back(new Camera(id, imageName, pos, gaze, up, imgPlane, numberofSample,apertureSize,focusDistance));
+				string tmoStr;
+				XMLElement* TMO = camElement->FirstChildElement("TMO");
+				if (TMO != nullptr)
+				{
+					tmoStr = TMO->GetText();
+
+				}
+				XMLElement* TMOOptions = camElement->FirstChildElement("TMOOptions");
+				if (TMOOptions != nullptr)
+				{
+					str = TMOOptions->GetText();
+
+					sscanf(str, "%f %f", &keyValue, &burnPercent);
+					
+				}
+				XMLElement* Saturation = camElement->FirstChildElement("Saturation");
+				if (Saturation != nullptr)
+				{
+					str = Saturation->GetText();
+
+					sscanf(str, "%f", &saturation);
+
+				}
+				XMLElement* Gamma = camElement->FirstChildElement("Gamma");
+				if (Gamma != nullptr)
+				{
+					str = Gamma->GetText();
+
+					sscanf(str, "%f", &gamma);
+
+				}
+			}
+			cameras.push_back(new Camera(id, imageName, pos, gaze, up, imgPlane, numberofSample,apertureSize,focusDistance,keyValue, burnPercent,
+				saturation, gamma, tmo));
 		}
 
 
@@ -443,7 +541,10 @@ void Scene::readMaterials(const char*& str, XMLError& eResult, XMLElement*& pEle
 		int curr = materials.size() - 1;
 
 		eResult = pMaterial->QueryIntAttribute("id", &materials[curr]->id);
+		
 		const char* type = pMaterial->Attribute("type");
+		const char* deGamma = pMaterial->Attribute("degamma");
+		
 		if (type == nullptr)
 			materials[curr]->materialType = Default;
 		else if (type[0] == 'm')
@@ -462,6 +563,29 @@ void Scene::readMaterials(const char*& str, XMLError& eResult, XMLElement*& pEle
 		str = materialElement->GetText();
 		sscanf(str, "%f %f %f", &materials[curr]->specularRef.r, &materials[curr]->specularRef.g, &materials[curr]->specularRef.b);
 
+
+
+		if (deGamma != nullptr)
+		{
+			if (deGamma[0] == 't')
+			{
+				float gamma = cameras[0]->gamma;
+				float x = std::pow(materials[curr]->ambientRef.r, gamma);
+				float y = std::pow(materials[curr]->ambientRef.g, gamma);
+				float z = std::pow(materials[curr]->ambientRef.b, gamma);
+				float x2 = std::pow(materials[curr]->diffuseRef.r, gamma);
+				float y2 = std::pow(materials[curr]->diffuseRef.g, gamma);
+				float z2 = std::pow(materials[curr]->diffuseRef.b, gamma);
+				float x3 = std::pow(materials[curr]->specularRef.r, gamma);
+				float y3 = std::pow(materials[curr]->specularRef.g, gamma);
+				float z3 = std::pow(materials[curr]->specularRef.b, gamma);
+				materials[curr]->ambientRef = glm::vec3(x,y,z);
+				materials[curr]->diffuseRef = glm::vec3(x2,y2,z2);
+				materials[curr]->specularRef= glm::vec3(x3,y3,z3);
+	
+			}
+		}
+		
 		materialElement = pMaterial->FirstChildElement("MirrorReflectance");
 		if (materialElement != nullptr)
 		{
@@ -1191,7 +1315,7 @@ void Scene::readTextureXml(const char*& str, XMLError& eResult, XMLElement*& pEl
 					{
 						str = mapElement->GetText();
 						sscanf(str, "%f",&bumpFactor);
-						cout << bumpFactor << endl;
+					
 					}
 				}
 				else if (str[0] == 'r' && str[8] == 'b')
@@ -1482,6 +1606,143 @@ void Scene::initMatrices()
 	}
 
 
+}
+
+void Scene::toneMapping(Image* image)	
+{
+	vector<float> luminances;
+	float totalLuminance = 0;
+	float worldLuminance;
+
+	for (int w = 0 ; w < cameras[0]->imgPlane.nx;w++)
+	{
+		for (int h = 0; h < cameras[0]->imgPlane.ny; h++)
+		{
+			glm::vec3 shadingColor = colorMap[w][h];
+			float luminance = 0.27 * shadingColor.r + 0.67 * shadingColor.g + 0.06 * shadingColor.b;
+			luminances.push_back(luminance);
+			totalLuminance += log(luminance + 0.001);
+			
+		}
+	}
+	std::sort(luminances.begin(), luminances.end());
+	worldLuminance = exp(totalLuminance / (cameras[0]->imgPlane.nx * cameras[0]->imgPlane.ny));
+	const float worldDivided = cameras[0]->keyValue / worldLuminance;
+	 float lWhite = luminances[((100 - cameras[0]->burnPercent) / 100.0) * luminances.size()];
+	/*float** LD;
+	LD = new float* [cameras[0]->imgPlane.nx];
+	for (int i = 0; i < cameras[0]->imgPlane.nx; ++i)
+		LD[i] = new float[cameras[0]->imgPlane.ny];*/
+
+
+	 float* rgb = new float[3 * cameras[0]->imgPlane.nx * cameras[0]->imgPlane.ny];
+	 int i = 0;
+	for (int w = 0; w < cameras[0]->imgPlane.nx; w++)
+	{
+		for (int h = 0; h < cameras[0]->imgPlane.ny; h++)
+		{
+			glm::vec3 shadingColor = colorMap[w][h];
+			float luminance = 0.27 * shadingColor.r + 0.67 * shadingColor.g + 0.06 * shadingColor.b;
+			float Lxy = worldDivided * luminance;
+			float LD = (Lxy * (1 + (Lxy / (lWhite * lWhite)))) / (1 + Lxy);
+			
+			float r = pow(shadingColor.r / luminance, cameras[0]->saturation)* LD;
+			rgb[3 * i] = r;
+			if (r > 1) r = 1;
+			r = pow(r, 1.0 / cameras[0]->gamma) ;
+			
+			r *= 255;
+			
+			float g = pow(shadingColor.g / luminance, cameras[0]->saturation)* LD;
+			rgb[3 * i + 1] = g;
+			if (g > 1) g = 1;
+			g = pow(g, 1.0 / cameras[0]->gamma);
+			
+			g *= 255;
+			
+			float b = pow(shadingColor.b / luminance, cameras[0]->saturation)* LD;
+			rgb[3 * i + 2] = b;
+			if (b > 1) b = 1;
+			b = pow(b, 1.0 / cameras[0]->gamma);
+			
+			b *= 255;
+			
+			shadingColor = glm::vec3(r, g, b);
+			i++;
+			shadingColor.x = shadingColor.x > 255 ? 255 : shadingColor.x;
+			shadingColor.y = shadingColor.y > 255 ? 255 : shadingColor.y;
+			shadingColor.z = shadingColor.z > 255 ? 255 : shadingColor.z;
+			
+			Color lastColor = Color{ (unsigned int)shadingColor.x,(unsigned int)shadingColor.y,(unsigned int)shadingColor.z };
+			image->setPixelValue(w, h, lastColor);
+			
+		}
+	}
+	saveEXR(rgb);
+
+}
+
+void Scene::saveEXR(float* rgb)
+{
+	int width = cameras[0]->imgPlane.nx, height  = cameras[0]->imgPlane.ny;
+	
+	EXRHeader header;
+	InitEXRHeader(&header);
+
+	EXRImage image;
+	InitEXRImage(&image);
+
+	image.num_channels = 3;
+
+	std::vector<float> images[3];
+	images[0].resize(width * height);
+	images[1].resize(width * height);
+	images[2].resize(width * height);
+
+	for (int i = 0; i < width * height; i++) {
+		images[0][i] = rgb[3 * i + 0];
+		images[1][i] = rgb[3 * i + 1];
+		images[2][i] = rgb[3 * i + 2];
+	}
+
+	float* image_ptr[3];
+	image_ptr[0] = &(images[2].at(0)); // B
+	image_ptr[1] = &(images[1].at(0)); // G
+	image_ptr[2] = &(images[0].at(0)); // R
+
+	image.images = (unsigned char**)image_ptr;
+	image.width = width;
+	image.height = height;
+
+	header.num_channels = 3;
+	header.channels = (EXRChannelInfo*)malloc(sizeof(EXRChannelInfo) * header.num_channels);
+	// Must be BGR(A) order, since most of EXR viewers expect this channel order.
+	strncpy(header.channels[0].name, "B", 255); header.channels[0].name[strlen("B")] = '\0';
+	strncpy(header.channels[1].name, "G", 255); header.channels[1].name[strlen("G")] = '\0';
+	strncpy(header.channels[2].name, "R", 255); header.channels[2].name[strlen("R")] = '\0';
+
+	header.pixel_types = (int*)malloc(sizeof(int) * header.num_channels);
+	header.requested_pixel_types = (int*)malloc(sizeof(int) * header.num_channels);
+	for (int i = 0; i < header.num_channels; i++) {
+		header.pixel_types[i] = TINYEXR_PIXELTYPE_FLOAT; // pixel type of input image
+		header.requested_pixel_types[i] = TINYEXR_PIXELTYPE_HALF; // pixel type of output image to be stored in .EXR
+	}
+
+	const char* err;
+	int ret = SaveEXRImageToFile(&image, &header, "exp.exr", &err);
+	if (ret != TINYEXR_SUCCESS) {
+		fprintf(stderr, "Save EXR err: %s\n", err);
+		return;
+	}
+	printf("Saved exr file. [ %s ] \n", "exp");
+
+	free(rgb);
+
+	free(header.channels);
+	free(header.pixel_types);
+	free(header.requested_pixel_types);
+
+	return;
 }
 
 void Scene::readTexture(const char* fileName,int id)

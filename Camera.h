@@ -16,16 +16,25 @@ typedef struct ImagePlane
     int nx;         // number of pixel columns
     int ny;         // number of pixel rows
 } ImagePlane;
-
+enum TMO
+{
+	Photographic
+};
 class Camera
 {
 public:
+ 
   char imageName[32];
   int id;
   ImagePlane imgPlane;     // Image plane
   int sample;
   float apertureSize;
   float focusDistance;
+  float keyValue;
+  float burnPercent;
+  float saturation;
+  float gamma;
+  TMO tmo;
   glm::vec3 imgPostion;
 	Camera(int id,                      // Id of the camera
            const char* imageName,       // Name of the output PPM file
@@ -35,7 +44,12 @@ public:
            const ImagePlane& imgPlane,
 		   int sample, 
 		   float apertureSize,
-		   float focusDistance); // Image plane parameters
+		   float focusDistance, 
+		   float keyValue,
+		   float burnPercent,
+		   float saturation,
+		   float gamma,
+		   TMO tmo); // Image plane parameters
 
     // Computes the primary ray through pixel (row, col)
 	Ray getPrimaryRay(int row, int col, int xSample=0, int ySample=0) const;
