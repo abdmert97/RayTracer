@@ -39,16 +39,59 @@ glm::vec3 Shading::shading(int depth, Shape*& shape, IntersectionInfo& closestOb
 			glm::vec3 shaders;
 			if(shape->textureIndex != -1)
 			{
-				calculateTextureColor(closestObjectInfo, material,shape->textureIndex, shape->textureIndex2, light, lightVector, cameraVectorNormalized, shaders);
+				calculateTextureColor(closestObjectInfo, material,shape->textureIndex, shape->textureIndex2, (Light*)light, lightVector, cameraVectorNormalized, shaders);
 				
 			}
 			else
 			{
-				calculateColor(closestObjectInfo, material, light, lightVector, cameraVectorNormalized, shaders);
+				calculateColor(closestObjectInfo, material, (Light*)light, lightVector, cameraVectorNormalized, shaders);
 			}
-			
 			color = color + shaders;
+		}
+		for (int l = 0 ; l < pScene->directionalLights.size();l++)
+		{
+			DirectionalLight* light = pScene->directionalLights[l];
+			lightVector = -light->direction;
+			glm::vec3 s = closestObjectInfo.intersectionPoint + glm::vec3(200)*lightVector;
+			if (isShadow(s, closestObjectInfo.intersectionPoint))
+			{
+				continue;
+			}
+			// Shading
+			glm::vec3 shaders;
+			if (shape->textureIndex != -1)
+			{
+				calculateTextureColor(closestObjectInfo, material, shape->textureIndex, shape->textureIndex2, (Light*)light, lightVector, cameraVectorNormalized, shaders);
 
+			}
+			else
+			{
+				calculateColor(closestObjectInfo, material, (Light*)light, lightVector, cameraVectorNormalized, shaders);
+			}
+			color = color + shaders;
+		}
+		for (int l = 0; l < pScene->spotLights.size(); l++)
+		{
+			SpotLight *light = pScene->spotLights[l];
+			lightVector = (light->position - closestObjectInfo.intersectionPoint);
+			// Shadows
+
+			if (isShadow(light->position, closestObjectInfo.intersectionPoint))
+			{
+				continue;
+			}
+			// Shading
+			glm::vec3 shaders;
+			if (shape->textureIndex != -1)
+			{
+				calculateTextureColor(closestObjectInfo, material, shape->textureIndex, shape->textureIndex2, (Light*)light, lightVector, cameraVectorNormalized, shaders);
+
+			}
+			else
+			{
+				calculateColor(closestObjectInfo, material, (Light*)light, lightVector, cameraVectorNormalized, shaders);
+			}
+			color = color + shaders;
 		}
 	}
 	//yukarý al
@@ -64,10 +107,10 @@ glm::vec3 Shading::shading(int depth, Shape*& shape, IntersectionInfo& closestOb
 }
 bool Shading::isShadow(glm::vec3& lightPosition, glm::vec3& intersectionPoint)const
 {
-	glm::vec3 lightVector = lightPosition - intersectionPoint;
+	glm::vec3 lightVector = glm::normalize(lightPosition - intersectionPoint);
 	
-	Ray shadowRay = Ray((intersectionPoint + normalize(lightVector) * shadowRayEps), normalize(lightVector));
-	Ray shadowRay_ = Ray(intersectionPoint, normalize(lightVector));
+	Ray shadowRay = Ray((intersectionPoint + lightVector * shadowRayEps), lightVector);
+	Ray shadowRay_ = Ray(intersectionPoint, lightVector);
 	float tFromIntersectionToLight = shadowRay_.gett(lightPosition);
 	
 	IntersectionInfo returnVal = pScene->closestObject(shadowRay);
@@ -91,7 +134,7 @@ bool Shading::isShadow(glm::vec3& lightPosition, glm::vec3& intersectionPoint)co
 
 	return false;
 }
-void Shading::calculateTextureColor(IntersectionInfo& closestObjectInfo, Material material,int textureIndex, int textureIndex2, PointLight* light, glm::vec3 lightVector, glm::vec3 cameraVectorNormalized, glm::vec3& shaders) const
+void Shading::calculateTextureColor(IntersectionInfo& closestObjectInfo, Material material,int textureIndex, int textureIndex2, Light* light, glm::vec3 lightVector, glm::vec3 cameraVectorNormalized, glm::vec3& shaders) const
 {
 	TextureMap *map = pScene->textureMaps[textureIndex];
 	TextureMap* map2 = pScene->textureMaps[textureIndex];
@@ -306,7 +349,7 @@ glm::vec3 Shading::diffuseShading(glm::vec3 lightRayVector, Material& material, 
 	return diffuse;
 
 }
-void Shading::calculateColor(IntersectionInfo& closestObjectInfo, Material material, PointLight* light, glm::vec3 lightVector, glm::vec3 cameraVectorNormalized, glm::vec3& shaders) const
+void Shading::calculateColor(IntersectionInfo& closestObjectInfo, Material material,Light* light, glm::vec3 lightVector, glm::vec3 cameraVectorNormalized, glm::vec3& shaders) const
 {
 	glm::vec3 lightVectorNormalized = normalize(lightVector);
 	glm::vec3 intensity = light->computeLightContribution(closestObjectInfo.intersectionPoint);

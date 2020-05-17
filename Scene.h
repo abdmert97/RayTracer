@@ -31,6 +31,9 @@ class Shading;
 class Node;
 class Texture;
 class TextureMap;
+class DirectionalLight;
+class Light;
+class SpotLight;
 using namespace std;
 using namespace tinyxml2;
 
@@ -68,7 +71,9 @@ public:
 	glm::vec3 ambientLight;			// Ambient light radiance
 	int numberofSample;
 	vector<Camera*> cameras;		// Vector holding all cameras
-	vector<PointLight*> lights;		// Vector holding all point lights
+	vector<PointLight*> lights;
+	vector<DirectionalLight*> directionalLights;
+	vector<SpotLight*> spotLights;
 	vector<Material*> materials;	// Vector holding all materials
 	vector<glm::vec3> vertices;		// Vector holding all vertices (vertex data)
 	vector<glm::vec2> textCoord;

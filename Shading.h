@@ -14,8 +14,9 @@ class Material;
 class Shape;
 class IntersectionInfo;
 class TextureMap;
-
-
+class Light;
+class DirectionalLight;
+class SpotLight;
 class Shading
 {
 
@@ -47,9 +48,9 @@ public:
 
 private:
 	bool isShadow(glm::vec3& lightPosition, glm::vec3& intersectionPoint)const;
-	void calculateColor(IntersectionInfo& closestObjectInfo, Material material, PointLight* light, glm::vec3 lightVector,
+	void calculateColor(IntersectionInfo& closestObjectInfo, Material material, Light* light, glm::vec3 lightVector,
 	glm::vec3 cameraVectorNormalized, glm::vec3& shaders) const;
-	void calculateTextureColor(IntersectionInfo& closestObjectInfo, Material material,int textureIndex,int textureIndex2, PointLight* light, glm::vec3 lightVector,
+	void calculateTextureColor(IntersectionInfo& closestObjectInfo, Material material,int textureIndex,int textureIndex2, Light* light, glm::vec3 lightVector,
 		glm::vec3 cameraVectorNormalized, glm::vec3& shaders) const;
 	glm::vec3 blinnPhongShading(glm::vec3 lightRayVector, glm::vec3& cameraRayVector, Material& material,
 	glm::vec3& lightIntensity, glm::vec3& normal) const;

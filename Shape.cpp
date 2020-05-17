@@ -10,6 +10,7 @@ Shape::Shape(void)
 
 void Shape::initTransformatrix()
 {
+	if (transformations.size() == 0)return;
 	inverseTransformMatrix = glm::mat4x4(0);
 	inverseTransformMatrix[0][0] = 1;
 	inverseTransformMatrix[1][1] = 1;

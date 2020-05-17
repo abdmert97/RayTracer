@@ -7,9 +7,11 @@
 #include "tinyexr.h"
 void Scene::initScene()
 {
+	
 	setScene();
 	initMatrices();
 	// Create BoundingBox
+	
 	for (Shape* obj : objects)
 	{
 		obj->getBounds();
@@ -18,26 +20,29 @@ void Scene::initScene()
 		if(obj->shapeType == MeshType)
 		{
 			Mesh* mesh = (Mesh*)obj;
-	
+			cout << mesh->faces.size()<< endl;
 			for (Triangle* const tris : mesh->faces)
 			{
+			
 				tris->getBounds();
 				tris->initTransformatrix();
 			}
-			mesh->calculateFaceNormals();
+			if(mesh->shadingMode == SmoothShading)
+				mesh->calculateFaceNormals();
 		}
-	}
+	}	
 	boundingVolume = new BoundingVolume(objects);
 	shading = new Shading(shadowRayEps, materials, ambientLightList, lightCount, objectCount, lights, &objects);
 }
 void Scene::renderScene(void)
 {
+
 	for (int i = 0; i < cameraCount; i++)
 	{
 		Camera* camera = cameras[i];
 		ImagePlane imagePlane = camera->imgPlane;
 		Image* image = new Image(imagePlane.nx, imagePlane.ny);
-
+	
 		threading(camera, image);
 		//renderImage(camera, image);
 		if (cameras[0]->keyValue > 0)
@@ -704,6 +709,7 @@ void Scene::readVertices(const char*& str, XMLElement*& pElement, XMLNode* pRoot
 		}
 		vertices.push_back(tmpPoint);
 	}
+	
 }
 void Scene::readTextCoord(const char*& str, XMLElement*& pElement, XMLNode* pRoot)
 {
@@ -1212,6 +1218,51 @@ void Scene::readLights(const char*& str, XMLError& eResult, XMLElement*& pElemen
 
 		pLight = pLight->NextSiblingElement("PointLight");
 	}
+	pLight = pElement->FirstChildElement("DirectionalLight");
+	while (pLight != nullptr)
+	{
+
+		lightElement = pLight->FirstChildElement("Direction");
+		str = lightElement->GetText();
+		sscanf(str, "%f %f %f", &position.x, &position.y, &position.z);
+		lightElement = pLight->FirstChildElement("Radiance");
+		str = lightElement->GetText();
+		sscanf(str, "%f %f %f", &intensity.r, &intensity.g, &intensity.b);
+
+		directionalLights.push_back(new DirectionalLight(position, intensity));
+
+		pLight = pLight->NextSiblingElement("DirectionalLight");
+	}
+	
+	pLight = pElement->FirstChildElement("SpotLight");
+	while (pLight != nullptr)
+	{
+		glm::vec3 direction;
+		float angle1;
+		float angle2;
+		lightElement = pLight->FirstChildElement("Position");
+		str = lightElement->GetText();
+		sscanf(str, "%f %f %f", &position.x, &position.y, &position.z);
+		lightElement = pLight->FirstChildElement("Direction");
+		str = lightElement->GetText();
+		sscanf(str, "%f %f %f", &direction.r, &direction.g, &direction.b);
+		lightElement = pLight->FirstChildElement("Intensity");
+		str = lightElement->GetText();
+		sscanf(str, "%f %f %f", &intensity.r, &intensity.g, &intensity.b);
+		lightElement = pLight->FirstChildElement("CoverageAngle");
+		str = lightElement->GetText();
+		sscanf(str, "%f",&angle1);
+		lightElement = pLight->FirstChildElement("FalloffAngle");
+		str = lightElement->GetText();
+		sscanf(str, "%f", &angle2);
+
+		spotLights.push_back(new SpotLight(position, direction,intensity,angle1,angle2));
+
+		pLight = pLight->NextSiblingElement("SpotLight");
+	}
+
+
+
 }
 void Scene::readTextureXml(const char*& str, XMLError& eResult, XMLElement*& pElement, XMLNode* pRoot)
 {
