@@ -1256,10 +1256,36 @@ void Scene::readLights(const char*& str, XMLError& eResult, XMLElement*& pElemen
 		str = lightElement->GetText();
 		sscanf(str, "%f", &angle2);
 
-		spotLights.push_back(new SpotLight(position, direction,intensity,angle1,angle2));
+		spotLights.push_back(new SpotLight(position, direction,intensity,angle1/2,angle2/2));
 
 		pLight = pLight->NextSiblingElement("SpotLight");
 	}
+	
+	pLight = pElement->FirstChildElement("AreaLight");
+	while (pLight != nullptr)
+	{
+		glm::vec3 normal;
+		float size;
+
+		lightElement = pLight->FirstChildElement("Position");
+		str = lightElement->GetText();
+		sscanf(str, "%f %f %f", &position.x, &position.y, &position.z);
+		lightElement = pLight->FirstChildElement("Normal");
+		str = lightElement->GetText();
+		sscanf(str, "%f %f %f", &normal.r, &normal.g, &normal.b);
+		lightElement = pLight->FirstChildElement("Radiance");
+		str = lightElement->GetText();
+		sscanf(str, "%f %f %f", &intensity.r, &intensity.g, &intensity.b);
+		lightElement = pLight->FirstChildElement("Size");
+		str = lightElement->GetText();
+		sscanf(str, "%f", &size);
+
+
+		areaLights.push_back(new AreaLight(position, normal, intensity, size));
+
+		pLight = pLight->NextSiblingElement("AreaLight");
+	}
+
 
 
 

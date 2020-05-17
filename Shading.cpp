@@ -93,6 +93,29 @@ glm::vec3 Shading::shading(int depth, Shape*& shape, IntersectionInfo& closestOb
 			}
 			color = color + shaders;
 		}
+		for (int l = 0; l < pScene->areaLights.size(); l++)
+		{
+			AreaLight *light = pScene->areaLights[l];
+			lightVector = (light->position - closestObjectInfo.intersectionPoint);
+			// Shadows
+
+			if (isShadow(light->position, closestObjectInfo.intersectionPoint))
+			{
+				continue;
+			}
+			// Shading
+			glm::vec3 shaders;
+			if (shape->textureIndex != -1)
+			{
+				calculateTextureColor(closestObjectInfo, material, shape->textureIndex, shape->textureIndex2, (Light*)light, lightVector, cameraVectorNormalized, shaders);
+
+			}
+			else
+			{
+				calculateColor(closestObjectInfo, material, (Light*)light, lightVector, cameraVectorNormalized, shaders);
+			}
+			color = color + shaders;
+		}
 	}
 	//yukarý al
 	if (depth <= 0)

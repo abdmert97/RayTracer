@@ -60,5 +60,26 @@ public:
 	}
 	glm::vec3 computeLightContribution(const glm::vec3& p);
 };
+class AreaLight: Light
+{
+public:
+	glm::vec3 position;
+	glm::vec3 normal;
+	glm::vec3 radiance;
+	float size;
+
+	AreaLight(const glm::vec3& position, const glm::vec3& normal, const glm::vec3& radiance, const float size)
+		: position(position),
+		  
+		  radiance(radiance),
+		  size(size)
+	{
+		this->normal = glm::normalize(normal);	
+	}
+
+	glm::vec3 computeLightContribution(const glm::vec3& p);
+
+
+};
 
 #endif

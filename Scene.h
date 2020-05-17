@@ -34,6 +34,7 @@ class TextureMap;
 class DirectionalLight;
 class Light;
 class SpotLight;
+class AreaLight;
 using namespace std;
 using namespace tinyxml2;
 
@@ -74,6 +75,7 @@ public:
 	vector<PointLight*> lights;
 	vector<DirectionalLight*> directionalLights;
 	vector<SpotLight*> spotLights;
+	vector<AreaLight*> areaLights;
 	vector<Material*> materials;	// Vector holding all materials
 	vector<glm::vec3> vertices;		// Vector holding all vertices (vertex data)
 	vector<glm::vec2> textCoord;

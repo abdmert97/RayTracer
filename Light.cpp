@@ -21,7 +21,6 @@ glm::vec3 PointLight::computeLightContribution(const glm::vec3& p)
 
 glm::vec3 DirectionalLight::computeLightContribution(const glm::vec3& p)
 {
-
 	return radiance;
 }
 
@@ -58,4 +57,18 @@ glm::vec3 SpotLight::computeLightContribution(const glm::vec3& p)
 	return intensity * (1.0f / distanceSquare)*f;
 	
 	
+}
+
+glm::vec3 AreaLight::computeLightContribution(const glm::vec3& p)
+{
+
+	glm::vec3 distance = p - position;
+	glm::vec3 objectVector = glm::normalize(distance);
+	float cost =abs(glm::dot(normal, objectVector));
+	float distanceSquare = distance.x * distance.x +
+		distance.y * distance.y +
+		distance.z * distance.z;
+	float mult = (size * size * cost) / distanceSquare;
+
+	return mult*radiance;
 }
