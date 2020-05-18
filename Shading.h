@@ -17,6 +17,7 @@ class TextureMap;
 class Light;
 class DirectionalLight;
 class SpotLight;
+class AreaLight;
 class Shading
 {
 

@@ -64,8 +64,11 @@ class AreaLight: Light
 {
 public:
 	glm::vec3 position;
+	glm::vec3 defaultpos;
 	glm::vec3 normal;
 	glm::vec3 radiance;
+	glm::vec3 u ;
+	glm::vec3 v ;
 	float size;
 
 	AreaLight(const glm::vec3& position, const glm::vec3& normal, const glm::vec3& radiance, const float size)
@@ -74,12 +77,16 @@ public:
 		  radiance(radiance),
 		  size(size)
 	{
-		this->normal = glm::normalize(normal);	
+		this->normal = glm::normalize(normal);
+		u = glm::vec3(0, -normal.z, normal.y);
+		defaultpos = position;
+		v = glm::vec3(normal.y * normal.y + normal.z * normal.z, -1*normal.x * normal.y, -1*normal.x * normal.z);
+	
 	}
 
 	glm::vec3 computeLightContribution(const glm::vec3& p);
 
-
+	glm::vec3 glossyReflection(float size, glm::vec3 vec);
 };
 
 #endif

@@ -77,6 +77,7 @@ void Scene::convertPPMToPNG(string ppmFileName, int osType)
 
 Scene::Scene(const char* xmlPath)
 {
+	transformationEnabled = false;
 	readXML(xmlPath);
 }
 void Scene::setScene()
@@ -1280,7 +1281,7 @@ void Scene::readLights(const char*& str, XMLError& eResult, XMLElement*& pElemen
 		str = lightElement->GetText();
 		sscanf(str, "%f", &size);
 
-
+		
 		areaLights.push_back(new AreaLight(position, normal, intensity, size));
 
 		pLight = pLight->NextSiblingElement("AreaLight");

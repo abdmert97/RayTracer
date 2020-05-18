@@ -22,12 +22,11 @@ glm::vec3 Shading::shading(int depth, Shape*& shape, IntersectionInfo& closestOb
 	{
 		color = ambientLightList[shape->matIndex];
 
-		PointLight* light;
 		glm::vec3 lightVector;
 		
 		for (int l = 0; l < lightCount; l++)
 		{
-			light = lights[l];
+			PointLight* light = lights[l];
 			lightVector = (light->position - closestObjectInfo.intersectionPoint);
 			// Shadows
 			
@@ -98,7 +97,7 @@ glm::vec3 Shading::shading(int depth, Shape*& shape, IntersectionInfo& closestOb
 			AreaLight *light = pScene->areaLights[l];
 			lightVector = (light->position - closestObjectInfo.intersectionPoint);
 			// Shadows
-
+		
 			if (isShadow(light->position, closestObjectInfo.intersectionPoint))
 			{
 				continue;
@@ -397,7 +396,6 @@ glm::vec3 Shading::blinnPhongShading(glm::vec3 lightRayVector, glm::vec3& camera
 	return blinnPhongLight;
 
 }
-
 glm::vec3 Shading::reflect(const glm::vec3& incoming, const glm::vec3& normal)
 {
 	return incoming - normal * glm::dot(incoming, normal) * glm::vec3(2);
@@ -435,7 +433,6 @@ glm::vec3 Shading::glossyReflection(float roughness, glm::vec3 vec)
 
 	return glm::normalize(vec + roughness * (e1 * u + e2 * v));
 }
-
 void Shading::getReflection(int depth, IntersectionInfo& intersectionInfo, Material material, glm::vec3& color, glm::vec3 cameraVectorNormalized)
 {
 	if (depth <= 0) return;
@@ -533,8 +530,6 @@ float Shading::fresnel(const glm::vec3& incoming, const glm::vec3& normal, const
 	// As a consequence of the conservation of energy, transmittance is given by:
 	// kt = 1 - kr;
 }
-
-
 void Shading::refraction(int depth, Ray ray, IntersectionInfo& intersection, Material material, glm::vec3& color, glm::vec3 rayDirection, float n_i)
 {
 	glm::vec3 refractionColor{ 0,0,0 };
