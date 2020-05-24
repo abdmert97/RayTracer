@@ -27,7 +27,7 @@ void Scene::initScene()
 				tris->getBounds();
 				tris->initTransformatrix();
 			}
-			if(mesh->shadingMode == SmoothShading)
+		
 				mesh->calculateFaceNormals();
 		}
 	}	
@@ -99,6 +99,8 @@ void Scene::setScene()
 		for (int i = 0; i < cameras[0]->imgPlane.nx; ++i)
 			colorMap[i] = new glm::vec3[cameras[0]->imgPlane.ny];
 	}
+	if (numberofSample == 0)
+		numberofSample = 1;
 }
 void Scene::threading(Camera* camera, Image* image)
 {
@@ -217,7 +219,7 @@ void Scene::renderImagePart(float start, float end, Camera* camera, Image* image
 						if (closestObjectReturnVal.objectID == -1) // ray hits nothing
 						{
 							 // Set background Color
-							 int time = pow(sample,2) - pow(abs(i - sample / 2),2) - pow(abs(j - sample / 2),2);
+							 int time = pow(sample, 2) - pow(abs(i - sample / 2), 2) - pow(abs(j - sample / 2), 2);
 					
 							 total += time;
 							for (TextureMap * map : textureMaps)
@@ -230,8 +232,30 @@ void Scene::renderImagePart(float start, float end, Camera* camera, Image* image
 									totalColor += map->getTextureColor(glm::vec2(u,v))* glm::vec3(time);
 								}
 							}
-							
+							for (int i = 0 ; i< enviromentLight.size();i++)
+							{
+								EnviromentLight* light = enviromentLight[i];
+								float x = ray.direction.x;
+								float y = ray.direction.y;
+								float z = ray.direction.z;
 						
+
+								float theta = acosf(y);
+								float fi = atan2(z, x);
+								glm::vec2 textCoord = glm::vec2(0);
+								textCoord.x = (-fi + PI) / (2 * PI);
+								textCoord.y = theta / PI;
+								glm::vec2 textCoordClamped = glm::vec2(textCoord.x - (int)textCoord.x, textCoord.y - (int)textCoord.y);
+								
+								glm::vec2 pixelPos = glm::vec2(textCoordClamped.x * light->texture->width, textCoordClamped.y * light->texture->height);
+								int p = (int)pixelPos.x;
+								int q = (int)pixelPos.y;
+								
+								glm::vec3 col = light->texture->getTextureColor(p, q) * glm::vec3(time);
+								
+								totalColor += col;
+							}
+							
 						}
 						else // if ray hits an object
 						{
@@ -240,23 +264,34 @@ void Scene::renderImagePart(float start, float end, Camera* camera, Image* image
 					   		
 						     glm::vec3 shadingColor = shading->shading(maxRecursionDepth, shape, closestObjectReturnVal, ray);
 					   		 //  cout<<(int)color.red<< " "<<(int)color.grn<< " "<<(int)color.blu<< " "<<endl;
-					   		 shadingColor.x = shadingColor.x > 255 ? 255 : shadingColor.x;
-					   		 shadingColor.y = shadingColor.y > 255 ? 255 : shadingColor.y;
-					   		 shadingColor.z = shadingColor.z > 255 ? 255 : shadingColor.z;
+							 
 							
 							 int time = pow(sample, 2) - pow(abs(i - sample / 2), 2) - pow(abs(j - sample / 2), 2);
-							
-							 total += time;
-							
-					   			totalColor += (shadingColor * glm::vec3(time));
 						
+							 total += time;
+							 glm::vec3 n = (shadingColor * glm::vec3(time));
+					   		 totalColor += n;
+							 
 						}
+						
 					}
+			
 				}
+			
+				if(camera->keyValue>0)
+				{
+					glm::vec3 col = glm::vec3(totalColor.x / total, totalColor.y / total, totalColor.z / total);
 				
-				Color res = { totalColor.x/ total,totalColor.y / total,totalColor.z / total };
+					colorMap[w][h] = col;
 				
-				image->setPixelValue(w, h, res);
+				}
+				else
+				{
+					Color res = { totalColor.x / total,totalColor.y / total,totalColor.z / total };
+
+					image->setPixelValue(w, h, res);
+				}
+		
 			}
 			else
 			{
@@ -837,8 +872,17 @@ void Scene::readMeshes(const char*& str, XMLError& eResult, XMLElement*& pElemen
 		
 			happly::PLYData plyIn(filePath);
 			int currID = vertices.size();
-	
+			std::vector<float> us = plyIn.getElement("vertex").getProperty<float>("u");
+			std::vector<float> vs = plyIn.getElement("vertex").getProperty<float>("v");
+			if (us.size() != 0)
+			{
+				for (int i = 0 ; i< us.size();i++)
+				{
+					textCoord.push_back(glm::vec2(us[i],vs[i]));
+				}
+			}
 			std::vector<std::array<double, 3>> vPos = plyIn.getVertexPositions();
+			
 			std::vector<std::vector<int>> fInd = plyIn.getFaceIndices<int>();
 			
 			Material* material = materials[matIndex - 1];
@@ -849,6 +893,7 @@ void Scene::readMeshes(const char*& str, XMLError& eResult, XMLElement*& pElemen
 			}
 			for (std::vector<int> indices : fInd)
 			{
+				
 				if(indices.size() == 4)
 				{
 					p1Index = indices[0] + currID + 1;
@@ -867,14 +912,23 @@ void Scene::readMeshes(const char*& str, XMLError& eResult, XMLElement*& pElemen
 					p1Index = indices[0] + currID + 1;
 					p2Index = indices[1] + currID + 1;
 					p3Index = indices[2] + currID + 1;
-
-					faces.push_back((new Triangle(id, matIndex - 1,text1,text2, material, p1Index, p2Index, p3Index, &vertices, TriangleShape, transformList, motionBlur,shadingMode)));
+					Triangle* tris = (new Triangle(id, matIndex - 1, text1, text2, material, p1Index, p2Index, p3Index, &vertices, TriangleShape, transformList, motionBlur, shadingMode));
+					if (us.size() != 0)
+					{
+						tris->textPoint1 = p1Index;
+						tris->textPoint2 = p2Index;
+						tris->textPoint3 = p3Index;
+					}
+					faces.push_back(tris);
 					meshIndices->push_back(p1Index);
 					meshIndices->push_back(p2Index);
 					meshIndices->push_back(p3Index);
 				}
 				
 			}
+
+			
+			
 			objects.push_back(new Mesh(idCount++, matIndex - 1,text1,text2, material, faces, meshIndices, &vertices, MeshType, transformList,motionBlur,shadingMode));
 		}
 		else
@@ -1201,9 +1255,13 @@ void Scene::readLights(const char*& str, XMLError& eResult, XMLElement*& pElemen
 
 	XMLElement* pLight = pElement->FirstChildElement("AmbientLight");
 	XMLElement* lightElement;
-	str = pLight->GetText();
-	sscanf(str, "%f %f %f", &ambientLight.r, &ambientLight.g, &ambientLight.b);
-
+	if(pLight)
+	{
+		str = pLight->GetText();
+	
+		sscanf(str, "%f %f %f", &ambientLight.r, &ambientLight.g, &ambientLight.b);
+	}
+	else { ambientLight = glm::vec3(0); }
 	pLight = pElement->FirstChildElement("PointLight");
 	while (pLight != nullptr)
 	{
@@ -1287,6 +1345,22 @@ void Scene::readLights(const char*& str, XMLError& eResult, XMLElement*& pElemen
 		pLight = pLight->NextSiblingElement("AreaLight");
 	}
 
+	
+	pLight = pElement->FirstChildElement("SphericalDirectionalLight");
+	while (pLight != nullptr)
+	{
+		int id;
+
+		lightElement = pLight->FirstChildElement("ImageId");
+		str = lightElement->GetText();
+		sscanf(str, "%d", &id);
+	
+
+		Texture* text = textures[id - 1];
+		enviromentLight.push_back(new EnviromentLight(id-1,text));
+
+		pLight = pLight->NextSiblingElement("SphericalDirectionalLight");
+	}
 
 
 
@@ -1491,11 +1565,11 @@ void Scene::readXML(const char* xmlPath)
 	readTextCoord(str, pElement, pRoot);
 
 	readObjects(str, eResult, pElement, pRoot);
-	
-	// Parse lights
-	readLights(str, eResult, pElement, pRoot);
 	// Read textures
 	readTextureXml(str, eResult, pElement, pRoot);
+	// Parse lights
+	readLights(str, eResult, pElement, pRoot);
+	
 
 }
 
@@ -1697,10 +1771,11 @@ void Scene::toneMapping(Image* image)
 		for (int h = 0; h < cameras[0]->imgPlane.ny; h++)
 		{
 			glm::vec3 shadingColor = colorMap[w][h];
+		
 			float luminance = 0.27 * shadingColor.r + 0.67 * shadingColor.g + 0.06 * shadingColor.b;
 			luminances.push_back(luminance);
 			totalLuminance += log(luminance + 0.001);
-			
+	
 		}
 	}
 	std::sort(luminances.begin(), luminances.end());
@@ -1715,47 +1790,53 @@ void Scene::toneMapping(Image* image)
 
 	 float* rgb = new float[3 * cameras[0]->imgPlane.nx * cameras[0]->imgPlane.ny];
 	 int i = 0;
-	for (int w = 0; w < cameras[0]->imgPlane.nx; w++)
+	 for (int h = 0; h < cameras[0]->imgPlane.ny; h++)
+	
 	{
-		for (int h = 0; h < cameras[0]->imgPlane.ny; h++)
+		 for (int w = 0; w < cameras[0]->imgPlane.nx; w++)
 		{
 			glm::vec3 shadingColor = colorMap[w][h];
+		
 			float luminance = 0.27 * shadingColor.r + 0.67 * shadingColor.g + 0.06 * shadingColor.b;
 			float Lxy = worldDivided * luminance;
 			float LD = (Lxy * (1 + (Lxy / (lWhite * lWhite)))) / (1 + Lxy);
 			
 			float r = pow(shadingColor.r / luminance, cameras[0]->saturation)* LD;
-			rgb[3 * i] = r;
+			rgb[3 * i] = shadingColor.r;
 			if (r > 1) r = 1;
 			r = pow(r, 1.0 / cameras[0]->gamma) ;
 			
 			r *= 255;
 			
 			float g = pow(shadingColor.g / luminance, cameras[0]->saturation)* LD;
-			rgb[3 * i + 1] = g;
+			rgb[3 * i + 1] = shadingColor.g;
 			if (g > 1) g = 1;
 			g = pow(g, 1.0 / cameras[0]->gamma);
 			
 			g *= 255;
 			
 			float b = pow(shadingColor.b / luminance, cameras[0]->saturation)* LD;
-			rgb[3 * i + 2] = b;
+			rgb[3 * i + 2] = shadingColor.b;
 			if (b > 1) b = 1;
 			b = pow(b, 1.0 / cameras[0]->gamma);
 			
 			b *= 255;
 			
 			shadingColor = glm::vec3(r, g, b);
+			
 			i++;
 			shadingColor.x = shadingColor.x > 255 ? 255 : shadingColor.x;
 			shadingColor.y = shadingColor.y > 255 ? 255 : shadingColor.y;
 			shadingColor.z = shadingColor.z > 255 ? 255 : shadingColor.z;
 			
 			Color lastColor = Color{ (unsigned int)shadingColor.x,(unsigned int)shadingColor.y,(unsigned int)shadingColor.z };
+		
 			image->setPixelValue(w, h, lastColor);
 			
 		}
 	}
+
+	
 	saveEXR(rgb);
 
 }
@@ -1764,62 +1845,10 @@ void Scene::saveEXR(float* rgb)
 {
 	int width = cameras[0]->imgPlane.nx, height  = cameras[0]->imgPlane.ny;
 	
-	EXRHeader header;
-	InitEXRHeader(&header);
-
-	EXRImage image;
-	InitEXRImage(&image);
-
-	image.num_channels = 3;
-
-	std::vector<float> images[3];
-	images[0].resize(width * height);
-	images[1].resize(width * height);
-	images[2].resize(width * height);
-
-	for (int i = 0; i < width * height; i++) {
-		images[0][i] = rgb[3 * i + 0];
-		images[1][i] = rgb[3 * i + 1];
-		images[2][i] = rgb[3 * i + 2];
-	}
-
-	float* image_ptr[3];
-	image_ptr[0] = &(images[2].at(0)); // B
-	image_ptr[1] = &(images[1].at(0)); // G
-	image_ptr[2] = &(images[0].at(0)); // R
-
-	image.images = (unsigned char**)image_ptr;
-	image.width = width;
-	image.height = height;
-
-	header.num_channels = 3;
-	header.channels = (EXRChannelInfo*)malloc(sizeof(EXRChannelInfo) * header.num_channels);
-	// Must be BGR(A) order, since most of EXR viewers expect this channel order.
-	strncpy(header.channels[0].name, "B", 255); header.channels[0].name[strlen("B")] = '\0';
-	strncpy(header.channels[1].name, "G", 255); header.channels[1].name[strlen("G")] = '\0';
-	strncpy(header.channels[2].name, "R", 255); header.channels[2].name[strlen("R")] = '\0';
-
-	header.pixel_types = (int*)malloc(sizeof(int) * header.num_channels);
-	header.requested_pixel_types = (int*)malloc(sizeof(int) * header.num_channels);
-	for (int i = 0; i < header.num_channels; i++) {
-		header.pixel_types[i] = TINYEXR_PIXELTYPE_FLOAT; // pixel type of input image
-		header.requested_pixel_types[i] = TINYEXR_PIXELTYPE_HALF; // pixel type of output image to be stored in .EXR
-	}
-
-	const char* err;
-	int ret = SaveEXRImageToFile(&image, &header, "exp.exr", &err);
-	if (ret != TINYEXR_SUCCESS) {
-		fprintf(stderr, "Save EXR err: %s\n", err);
-		return;
-	}
-	printf("Saved exr file. [ %s ] \n", "exp");
-
-	free(rgb);
-
-	free(header.channels);
-	free(header.pixel_types);
-	free(header.requested_pixel_types);
-
+	string name = cameras[0]->imageName;
+	name.append(".exr");
+	int ret = SaveEXR(rgb, width, height, 3, 1, name.c_str(), 0);
+	delete rgb;
 	return;
 }
 
@@ -1827,17 +1856,45 @@ void Scene::readTexture(const char* fileName,int id)
 {
 	int width, height, bpp;
 	
-	const string filePath = "hw4/" + (string)fileName;
-	unsigned char* data = stbi_load(filePath.c_str(), &width, &height, &bpp, STBI_rgb);
-	if (!data) {
-		std::cout << "No File." << std::endl;
-		std::cout << fileName << endl;
+	const string filePath = "hw5/" + (string)fileName;
+	if (filePath[filePath.size()-1] == 'r') // exr file
+	{
+		
+		float* out; // width * height * RGBA
+		int width;
+		int height;
+		const char* err = NULL; // or nullptr in C++11
+
+		int ret = LoadEXR(&out, &width, &height, filePath.c_str(), &err);
+
+		if (ret != TINYEXR_SUCCESS) {
+			if (err) {
+				fprintf(stderr, "ERR : %s\n", err);
+				FreeEXRErrorMessage(err); // release memory of error message.
+			}
+		}
+		else {
+				Texture* texture = new Texture(id, height, width, out);
+				textures.push_back(texture);
+				free(out); // release memory of image data
+		}
 	}
 	else
 	{
-		std::cout << fileName << " readed" << endl;
-		Texture *texture =new Texture(id,height, width, data);
-		textures.push_back(texture);
+		unsigned char* data = stbi_load(filePath.c_str(), &width, &height, &bpp, STBI_rgb);
+		if (!data) {
+			std::cout << "No File." << std::endl;
+			std::cout << fileName << endl;
+		}
+		else
+		{
+			std::cout << fileName << " readed" << endl;
+			Texture* texture = new Texture(id, height, width, data);
+			textures.push_back(texture);
+		}
+		stbi_image_free(data);
 	}
-	stbi_image_free(data);
+
+	
+	
 }

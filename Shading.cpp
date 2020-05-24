@@ -29,8 +29,12 @@ glm::vec3 Shading::shading(int depth, Shape*& shape, IntersectionInfo& closestOb
 			PointLight* light = lights[l];
 			lightVector = (light->position - closestObjectInfo.intersectionPoint);
 			// Shadows
-			
-			if (isShadow(light->position, closestObjectInfo.intersectionPoint))
+
+			if(shape->textureIndex != -1 && pScene->textureMaps[shape->textureIndex]->decalMode == ReplaceALL)
+			{
+				;
+			}
+			else if (isShadow(light->position, closestObjectInfo.intersectionPoint))
 			{
 				continue;
 			}
@@ -115,8 +119,35 @@ glm::vec3 Shading::shading(int depth, Shape*& shape, IntersectionInfo& closestOb
 			}
 			color = color + shaders;
 		}
+
+		for (int l = 0; l < pScene->enviromentLight.size(); l++)
+		{
+			EnviromentLight* light = pScene->enviromentLight[l];
+			light->normal = closestObjectInfo.hitNormal;
+			light->computeLightContribution(closestObjectInfo.intersectionPoint);
+			lightVector = (light->position - closestObjectInfo.intersectionPoint);
+			// Shadows
+			
+			if (isShadow(light->position, closestObjectInfo.intersectionPoint))
+			{
+				continue;
+			}
+		
+			// Shading
+			glm::vec3 shaders;
+			if (shape->textureIndex != -1)
+			{
+				calculateTextureColor(closestObjectInfo, material, shape->textureIndex, shape->textureIndex2, (Light*)light, lightVector, cameraVectorNormalized, shaders);
+			
+			}
+			else
+			{
+				calculateColor(closestObjectInfo, material, (Light*)light, lightVector, cameraVectorNormalized, shaders);
+			}
+			color = color + shaders;
+		}
 	}
-	//yukarý al
+
 	if (depth <= 0)
 		return color;
 	if (material.materialType == Default)
@@ -125,6 +156,7 @@ glm::vec3 Shading::shading(int depth, Shape*& shape, IntersectionInfo& closestOb
 		getReflection(depth, closestObjectInfo, material, color, cameraVectorNormalized);
 	else if (material.materialType == Conductor || material.materialType == Dialectic)
 		refraction(depth, ray, closestObjectInfo, material, color,ray.direction,n_t);
+	
 	return color;
 }
 bool Shading::isShadow(glm::vec3& lightPosition, glm::vec3& intersectionPoint)const
@@ -167,7 +199,8 @@ void Shading::calculateTextureColor(IntersectionInfo& closestObjectInfo, Materia
 	glm::vec3 normal = closestObjectInfo.hitNormal;
 
 	glm::vec3 lightVectorNormalized = normalize(lightVector);
-	glm::vec3 intensity = light->computeLightContribution(closestObjectInfo.intersectionPoint);
+	
+	
 	shaders = { 0,0,0 };
 	glm::vec3 blinnPhongShade  ;
 
@@ -203,6 +236,7 @@ void Shading::calculateTextureColor(IntersectionInfo& closestObjectInfo, Materia
 		else if (map->decalMode == ReplaceKD)
 		{
 			material.diffuseRef = textureColor;
+	
 		}
 		if (map->decalMode == ReplaceALL)
 		{
@@ -219,13 +253,15 @@ void Shading::calculateTextureColor(IntersectionInfo& closestObjectInfo, Materia
 		if (map->decalMode == ReplaceALL)
 		{
 			shaders = textureColor;
+			
 			return;
 
 		}
 		if (map->decalMode == ReplaceKD)
 		{
 			material.diffuseRef = textureColor / glm::vec3(map->normalizer);
-
+	
+		
 		}
 		else if (map->decalMode == ReplaceNormal)
 		{
@@ -353,17 +389,18 @@ void Shading::calculateTextureColor(IntersectionInfo& closestObjectInfo, Materia
 			}
 		}
 	}
-	
+	glm::vec3 intensity = light->computeLightContribution(closestObjectInfo.intersectionPoint);
 	diffuseShade = diffuseShading(lightVectorNormalized, material, intensity, normal);
 	blinnPhongShade = blinnPhongShading(lightVectorNormalized, cameraVectorNormalized, material, intensity, normal);
 	shaders = diffuseShade + blinnPhongShade;
-
+	
 
 }
 glm::vec3 Shading::diffuseShading(glm::vec3 lightRayVector, Material& material, glm::vec3& lightIntensity, glm::vec3& normal)const
 {
 
 	float cosTheta = dot(lightRayVector, normal);
+
 	if (cosTheta < 0) cosTheta = 0;
 
 	glm::vec3 diffuse = glm::vec3(lightIntensity * cosTheta * material.diffuseRef);

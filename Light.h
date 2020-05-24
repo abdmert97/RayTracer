@@ -2,6 +2,7 @@
 #define _LIGHT_H_
 #include "Scene.h"
 
+class Texture;
 
 using namespace std;
 
@@ -78,8 +79,9 @@ public:
 		  size(size)
 	{
 		this->normal = glm::normalize(normal);
-		u = glm::vec3(0, -normal.z, normal.y);
 		defaultpos = position;
+		u = glm::vec3(0, -normal.z, normal.y);
+		
 		v = glm::vec3(normal.y * normal.y + normal.z * normal.z, -1*normal.x * normal.y, -1*normal.x * normal.z);
 	
 	}
@@ -87,6 +89,22 @@ public:
 	glm::vec3 computeLightContribution(const glm::vec3& p);
 
 	glm::vec3 glossyReflection(float size, glm::vec3 vec);
+};
+
+class EnviromentLight:Light
+{
+public:
+	int imageID;
+	Texture *texture;
+	glm::vec3 position;
+	glm::vec3 normal;
+	EnviromentLight(int id,Texture *text)
+	{
+		imageID = id;
+		position = glm::vec3(0);
+		texture = text;
+	}
+	glm::vec3 computeLightContribution(const glm::vec3& p);
 };
 
 #endif

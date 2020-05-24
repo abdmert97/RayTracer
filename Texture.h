@@ -39,11 +39,32 @@ public:
 			}
 		}
 	}
+
+	Texture(int id, int height, int width, float* data):id(id), height(height),
+		width(width) // exr
+	{
+		for (int i = 0; i < width; i++)
+		{
+			for (int j = 0; j < height; j++)
+			{
+				// read rgb
+				size_t index = 4 * (i * height + j);
+				glm::vec3 indexColor = {
+					(data[index + 0]),
+					(data[index + 1]),
+					(data[index + 2])
+				};
+
+				color.push_back(indexColor);
+			}
+		}
+	}
+
 	glm::vec3 getTextureColor(int x,int y)
 	{
 		
 		size_t index = (y * width + x);
-		
+	
 		return color[index];
 	}
 };
@@ -55,7 +76,8 @@ enum NoiseConversion
 enum TextureType
 {
 	StandardTexture,
-	Perlin
+	Perlin,
+	Enviroment
 };
 enum InterpolationType
 {

@@ -430,7 +430,7 @@ IntersectionInfo Triangle::intersect(const Ray& ray, Ray* rayTransformed)
 			glm::vec2 textCoord1 = pScene->textCoord[textPoint1];
 			glm::vec2 textCoord2 = pScene->textCoord[textPoint2];
 			glm::vec2 textCoord3 = pScene->textCoord[textPoint3];
-		
+			
 			returnValue.textCoord = (1 - beta - gamma) * textCoord1 + beta * textCoord2 + gamma * textCoord3;
 			
 			if (pScene->textureMaps[textureIndex]->decalMode == ReplaceNormal || pScene->textureMaps[textureIndex]->decalMode == BumpNormal||
