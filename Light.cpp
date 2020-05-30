@@ -64,14 +64,14 @@ float randomTime()
 {
 	std::random_device rd;  //Will be used to obtain a seed for the random number engine
 	std::mt19937 gen(rd()); //Standard mersenne_twister_engine seeded with rd()
-	uniform_real_distribution<> dis(-0.5, 0.5);
+	uniform_real_distribution<> dis(0, 1);
 	return dis(gen);
 }
 glm::vec3 AreaLight::computeLightContribution(const glm::vec3& p)
 {
 	
-	float r1 = randomTime() * size;
-	float r2 = randomTime() * size;
+	float r1 = randomTime() * size -0.5;
+	float r2 = randomTime() * size -0.5;
 	
 	glm::vec3 randomPos = defaultpos+u*r1+v*r2;
 	position = randomPos;

@@ -27,8 +27,8 @@ void Scene::initScene()
 				tris->getBounds();
 				tris->initTransformatrix();
 			}
-		
-				mesh->calculateFaceNormals();
+				if(mesh->shadingMode == SmoothShading)
+					mesh->calculateFaceNormals();
 		}
 	}	
 	boundingVolume = new BoundingVolume(objects);
@@ -872,8 +872,21 @@ void Scene::readMeshes(const char*& str, XMLError& eResult, XMLElement*& pElemen
 		
 			happly::PLYData plyIn(filePath);
 			int currID = vertices.size();
-			std::vector<float> us = plyIn.getElement("vertex").getProperty<float>("u");
-			std::vector<float> vs = plyIn.getElement("vertex").getProperty<float>("v");
+			std::vector<float> us;
+			std::vector<float> vs;
+			std::vector<float> nx;
+			std::vector<float> ny;
+			std::vector<float> nz;
+			if(plyIn.getElement("vertex").hasProperty("u"))
+			{
+				 us = plyIn.getElement("vertex").getProperty<float>("u");
+				 vs = plyIn.getElement("vertex").getProperty<float>("v");
+				 nx = plyIn.getElement("vertex").getProperty<float>("nx");
+				 ny = plyIn.getElement("vertex").getProperty<float>("ny");
+				 nz = plyIn.getElement("vertex").getProperty<float>("nz");
+			}
+			
+		
 			if (us.size() != 0)
 			{
 				for (int i = 0 ; i< us.size();i++)
@@ -915,9 +928,12 @@ void Scene::readMeshes(const char*& str, XMLError& eResult, XMLElement*& pElemen
 					Triangle* tris = (new Triangle(id, matIndex - 1, text1, text2, material, p1Index, p2Index, p3Index, &vertices, TriangleShape, transformList, motionBlur, shadingMode));
 					if (us.size() != 0)
 					{
-						tris->textPoint1 = p1Index;
-						tris->textPoint2 = p2Index;
-						tris->textPoint3 = p3Index;
+						tris->textPoint1 = p1Index-1;
+						tris->textPoint2 = p2Index-1;
+						tris->textPoint3 = p3Index-1;
+						
+						
+						
 					}
 					faces.push_back(tris);
 					meshIndices->push_back(p1Index);

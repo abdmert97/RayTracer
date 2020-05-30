@@ -42,6 +42,7 @@ Camera::Camera(int id,                      // Id of the camera
 	this->saturation =  saturation;
 	this->gamma =  gamma;
 	this->tmo = Photographic; tmo = Photographic;
+
 }
 
 /* Takes coordinate of an image pixel as row and col, and
