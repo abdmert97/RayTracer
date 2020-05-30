@@ -360,3 +360,5 @@ MigrationBackup/
 save/
 hw4/
 hw5/
+*.exr
+hw6/
