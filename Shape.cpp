@@ -160,9 +160,10 @@ BoundingBox* Mesh::getBounds()
 	return bounds;
 }
 
-void Mesh::calculateFaceNormals()
+
+void Mesh::face(int start ,int end)
 {
-	for (int i = 0; i < faces.size(); i++)
+	for (int i = start; i < end; i++)
 	{
 		Triangle* tris = faces[i];
 		tris->normal1 = glm::vec3(0);
@@ -171,6 +172,8 @@ void Mesh::calculateFaceNormals()
 		int count1 = 0;
 		int count2 = 0;
 		int count3 = 0;
+
+
 		for (int j = 0; j < faces.size(); j++)
 		{
 			Triangle* trisCheck = faces[j];
@@ -189,14 +192,55 @@ void Mesh::calculateFaceNormals()
 				tris->normal3 += trisCheck->getNormal();
 				count3++;
 			}
-		
+
 		}
-		
+
 		tris->normal1 /= count1;
 		tris->normal2 /= count2;
 		tris->normal3 /= count3;
 
 	}
+}
+void Mesh::calculateFaceNormals()
+{
+	cout << faces.size() << endl;
+	int size = faces.size();
+	std::thread td0(&Mesh::face, this,0,size/12 );
+	std::thread td1(&Mesh::face, this,(size)/12, (size*2) / 12);
+	std::thread td2(&Mesh::face, this, (size*2) / 12, (size*3) / 12);
+	std::thread td3(&Mesh::face, this, (size*3) / 12, (size*4) / 12);
+	std::thread td4(&Mesh::face, this, (size*4) / 12, (size*5) / 12);
+	std::thread td5(&Mesh::face, this, (size*5) / 12, (size*6) / 12);
+	std::thread td6(&Mesh::face, this, (size*6) / 12, (size*7) / 12);
+	std::thread td7(&Mesh::face, this, (size*7) / 12, (size*8) / 12);
+	std::thread td8(&Mesh::face, this, (size*8) / 12, (size*9) / 12);
+	std::thread td9(&Mesh::face, this, (size*9) / 12, (size*10) / 12);
+	std::thread tda(&Mesh::face, this, (size*10) / 12, (size*11) / 12);
+	std::thread tdb(&Mesh::face, this, (size*11) / 12, (size*12) /12 );
+	td0.join();
+
+	td1.join();
+
+	td2.join();
+
+	td3.join();
+
+	td4.join();
+
+	td5.join();
+
+	td6.join();
+
+	td7.join();
+
+	td8.join();
+
+	td9.join();
+
+	tda.join();
+
+	tdb.join();
+	
 }
 
 Triangle::Triangle(void)

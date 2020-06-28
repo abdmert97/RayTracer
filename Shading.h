@@ -79,7 +79,7 @@ public:
 	glm::vec3 glossyReflection(float roughness, glm::vec3 vec);
 	void getReflection(int depth, IntersectionInfo& intersectionInfo, Material material, glm::vec3& color, glm::vec3 cameraVectorNormalized);
 	glm::vec3 refract(const glm::vec3& incoming, const glm::vec3& normal, const float& refractionIndex, float n_i);
-	float fresnel(const glm::vec3& incoming, const glm::vec3& normal, const float& refractionIndex, Material material, float n_i);
+	float fresnel(const glm::vec3& incoming, const glm::vec3& normal, const float& refractionIndex, Material material, float n_i)const;
 	void refraction(int depth, Ray ray, IntersectionInfo& intersection, Material material, glm::vec3& color, glm::vec3 rayDirection, float n_i);
 	float randomE();
 };

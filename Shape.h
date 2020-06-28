@@ -178,6 +178,7 @@ public:
 	void MeshVolumeIntersection(const Ray& ray, Node* node, IntersectionInfo* intersecion_info,Ray * rayTransformed) ;
 	IntersectionInfo intersect(const Ray & ray, Ray* rayTransformed = nullptr) ; // Will take a ray and return a structure related to the intersection information. You will implement this.
 	BoundingBox* getBounds();
+	void face(int start, int end);
 	const vector<Triangle*> faces;
 	void calculateFaceNormals();
 	

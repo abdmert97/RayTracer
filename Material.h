@@ -10,6 +10,27 @@ enum MaterialType
 	Conductor,
 	Dialectic
 };
+enum BRDFType
+{
+	OriginalBlinnPhong,
+	ModifiedBlinnPhong,
+	NormalizedModifiedBlinnPhong,
+	NormalizedModifiedPhong,
+	ModifiedPhong,
+	OriginalPhong,
+	TorranceSparrow,
+
+};
+struct BRDF
+{
+	int id;
+	BRDFType brdfType;
+	float exponent;
+	BRDF()
+	{
+		id = -1;
+	}
+};
 // Class to hold variables related to a material
 class Material
 {
@@ -26,9 +47,10 @@ public:
 	float refractionIndex;
 	float roughness;
 	Material(void);	// Constructor
-	
+	BRDF brdf;
 private:
 	// Write any other stuff here
 };
+
 
 #endif

@@ -36,6 +36,7 @@ class Light;
 class SpotLight;
 class AreaLight;
 class EnviromentLight;
+struct BRDF;
 using namespace std;
 using namespace tinyxml2;
 
@@ -84,6 +85,7 @@ public:
 	vector<Shape*> objects;			// Vector holding all shapes
 	vector<Texture *> textures;
 	vector<TextureMap*> textureMaps;
+	vector<BRDF> brdfs;
 	glm::vec3 **colorMap;
 	Shading* shading;
 	
@@ -121,6 +123,7 @@ public:
 	static float randomTime();
 	void readTexture(const char* fileName, int id);
 private:
+	void readBRDFs(const char*& str, XMLError& eResult, XMLElement*& pElement, XMLNode* pRoot);
 	void readXML(const char* xmlPath);
 	void readPly(const char* str, const vector<Triangle>& faces, vector<int>* is);
 	void renderImagePart(float start, float end, Camera* camera, Image* image);

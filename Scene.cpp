@@ -28,7 +28,10 @@ void Scene::initScene()
 				tris->initTransformatrix();
 			}
 				if(mesh->shadingMode == SmoothShading)
+				{
+					cout << " calculate mesh normals " << mesh->id << endl;
 					mesh->calculateFaceNormals();
+				}
 		}
 	}	
 	boundingVolume = new BoundingVolume(objects);
@@ -585,7 +588,20 @@ void Scene::readMaterials(const char*& str, XMLError& eResult, XMLElement*& pEle
 		
 		const char* type = pMaterial->Attribute("type");
 		const char* deGamma = pMaterial->Attribute("degamma");
+		int BRDFID = -1;
+		eResult = pMaterial->QueryIntAttribute("BRDF",&BRDFID);
 		
+		BRDFID--;
+	
+		if(BRDFID >= 0)
+		{
+			
+			materials[curr]->brdf = brdfs[BRDFID];
+		}
+		else
+		{
+			materials[curr]->brdf = BRDF();
+		}
 		if (type == nullptr)
 			materials[curr]->materialType = Default;
 		else if (type[0] == 'm')
@@ -865,10 +881,11 @@ void Scene::readMeshes(const char*& str, XMLError& eResult, XMLElement*& pElemen
 		eResult =objElement->QueryIntAttribute("textureOffset", &textureOffset);
 	
 		const char* type = objElement->Attribute("plyFile");
-		if (type != nullptr && type[0] == 'p')
+		cout<< type<< endl;
+		if (type != nullptr )
 		{
 
-			const string filePath = "hw5/" + (string)type;
+			const string filePath =(string)type;
 		
 			happly::PLYData plyIn(filePath);
 			int currID = vertices.size();
@@ -881,9 +898,9 @@ void Scene::readMeshes(const char*& str, XMLError& eResult, XMLElement*& pElemen
 			{
 				 us = plyIn.getElement("vertex").getProperty<float>("u");
 				 vs = plyIn.getElement("vertex").getProperty<float>("v");
-				 nx = plyIn.getElement("vertex").getProperty<float>("nx");
-				 ny = plyIn.getElement("vertex").getProperty<float>("ny");
-				 nz = plyIn.getElement("vertex").getProperty<float>("nz");
+				 nx = plyIn.getElement("vertex").getProperty<float>("x");
+				 ny = plyIn.getElement("vertex").getProperty<float>("y");
+				 nz = plyIn.getElement("vertex").getProperty<float>("z");
 			}
 			
 		
@@ -902,6 +919,7 @@ void Scene::readMeshes(const char*& str, XMLError& eResult, XMLElement*& pElemen
 
 			for (std::array<double, 3> vertex : vPos)
 			{
+				
 				vertices.push_back(glm::vec3{ (float)vertex[0], (float)vertex[1], (float)vertex[2] });
 			}
 			for (std::vector<int> indices : fInd)
@@ -1568,6 +1586,8 @@ void Scene::readXML(const char* xmlPath)
 	// Parse cameras
 	readCamera(str, eResult, pElement, pRoot);
 
+	// Parse BRDFs
+	readBRDFs(str, eResult, pElement, pRoot);
 	// Parse materals
 	readMaterials(str, eResult, pElement, pRoot);
 	
@@ -1789,7 +1809,7 @@ void Scene::toneMapping(Image* image)
 			glm::vec3 shadingColor = colorMap[w][h];
 		
 			float luminance = 0.27 * shadingColor.r + 0.67 * shadingColor.g + 0.06 * shadingColor.b;
-			luminances.push_back(luminance);
+			luminances.push_back(log(luminance + 0.001));
 			totalLuminance += log(luminance + 0.001);
 	
 		}
@@ -1814,6 +1834,7 @@ void Scene::toneMapping(Image* image)
 			glm::vec3 shadingColor = colorMap[w][h];
 		
 			float luminance = 0.27 * shadingColor.r + 0.67 * shadingColor.g + 0.06 * shadingColor.b;
+		 	luminance = log(luminance + 0.001);
 			float Lxy = worldDivided * luminance;
 			float LD = (Lxy * (1 + (Lxy / (lWhite * lWhite)))) / (1 + Lxy);
 			
@@ -1872,7 +1893,7 @@ void Scene::readTexture(const char* fileName,int id)
 {
 	int width, height, bpp;
 	
-	const string filePath = "hw5/" + (string)fileName;
+	const string filePath = "hw6/" + (string)fileName;
 	if (filePath[filePath.size()-1] == 'r') // exr file
 	{
 		
@@ -1913,4 +1934,90 @@ void Scene::readTexture(const char* fileName,int id)
 
 	
 	
+}
+void Scene::readBRDFs(const char*& str, XMLError& eResult, XMLElement*& pElement, XMLNode* pRoot)
+{
+
+	pElement = pRoot->FirstChildElement("BRDFs");
+	if (pElement == nullptr)
+		return;
+	XMLElement* pMaterial = pElement->FirstChildElement("OriginalBlinnPhong");
+	XMLElement* materialElement;
+	while (pMaterial != nullptr)
+	{
+		BRDF brdf = BRDF();
+		
+		eResult = pMaterial->QueryIntAttribute("id", &brdf.id);
+		materialElement = pMaterial->FirstChildElement("Exponent");
+		str = materialElement->GetText();
+		sscanf(str, "%f", &brdf.exponent);
+
+		brdf.brdfType = OriginalBlinnPhong;
+		brdfs.push_back(brdf);
+		pMaterial = pMaterial->NextSiblingElement("OriginalBlinnPhong");
+	}
+	
+	pMaterial = pElement->FirstChildElement("ModifiedBlinnPhong");
+	while (pMaterial != nullptr)
+	{
+		BRDF brdf = BRDF();
+		eResult = pMaterial->QueryIntAttribute("id", &brdf.id);
+		materialElement = pMaterial->FirstChildElement("Exponent");
+		str = materialElement->GetText();
+		sscanf(str, "%f", &brdf.exponent);
+	
+
+		const char* type = pMaterial->Attribute("normalized");
+		if (type == nullptr)
+			brdf.brdfType = ModifiedBlinnPhong;
+		else
+			brdf.brdfType = NormalizedModifiedBlinnPhong;
+		brdfs.push_back(brdf);
+		pMaterial = pMaterial->NextSiblingElement("ModifiedBlinnPhong");
+	}
+	pMaterial = pElement->FirstChildElement("ModifiedPhong");
+	while (pMaterial != nullptr)
+	{
+		BRDF brdf = BRDF();
+		const char* norm;
+		eResult = pMaterial->QueryIntAttribute("id", &brdf.id);
+		const char* type = pMaterial->Attribute("normalized");
+		materialElement = pMaterial->FirstChildElement("Exponent");
+		str = materialElement->GetText();
+		sscanf(str, "%f", &brdf.exponent);
+		if(type == nullptr)
+			brdf.brdfType = ModifiedPhong;
+		else
+			brdf.brdfType = NormalizedModifiedPhong;
+		brdfs.push_back(brdf);
+		pMaterial = pMaterial->NextSiblingElement("ModifiedPhong");
+	}
+
+	pMaterial = pElement->FirstChildElement("OriginalPhong");
+	while (pMaterial != nullptr)
+	{
+		BRDF brdf =BRDF();
+
+		eResult = pMaterial->QueryIntAttribute("id", &brdf.id);
+		materialElement = pMaterial->FirstChildElement("Exponent");
+		str = materialElement->GetText();
+		sscanf(str, "%f", &brdf.exponent);
+		brdf.brdfType = OriginalPhong;
+		brdfs.push_back(brdf);
+		pMaterial = pMaterial->NextSiblingElement("OriginalPhong");
+	}
+
+	pMaterial = pElement->FirstChildElement("TorranceSparrow");
+	while (pMaterial != nullptr)
+	{
+		BRDF brdf = BRDF();
+
+		eResult = pMaterial->QueryIntAttribute("id", &brdf.id);
+		materialElement = pMaterial->FirstChildElement("Exponent");
+		str = materialElement->GetText();
+		sscanf(str, "%f", &brdf.exponent);
+		brdf.brdfType = TorranceSparrow;
+		brdfs.push_back(brdf);
+		pMaterial = pMaterial->NextSiblingElement("TorranceSparrow");
+	}
 }

@@ -1,6 +1,6 @@
 #include "Shading.h"
 #include <random>
-
+#define PI 3.14159265
 extern Scene* pScene;
 glm::vec3 Shading::shading(int depth, Shape*& shape, IntersectionInfo& closestObjectInfo, Ray& ray,float n_t)
 {
@@ -399,11 +399,18 @@ void Shading::calculateTextureColor(IntersectionInfo& closestObjectInfo, Materia
 glm::vec3 Shading::diffuseShading(glm::vec3 lightRayVector, Material& material, glm::vec3& lightIntensity, glm::vec3& normal)const
 {
 
+	
 	float cosTheta = dot(lightRayVector, normal);
 
 	if (cosTheta < 0) cosTheta = 0;
 
 	glm::vec3 diffuse = glm::vec3(lightIntensity * cosTheta * material.diffuseRef);
+	if (material.brdf.brdfType == NormalizedModifiedPhong || material.brdf.brdfType == NormalizedModifiedBlinnPhong 
+	 || material.brdf.brdfType == TorranceSparrow)
+	{
+		float pi = (1 / PI);
+		diffuse = diffuse * pi;
+	}
 
 	return diffuse;
 
@@ -413,19 +420,131 @@ void Shading::calculateColor(IntersectionInfo& closestObjectInfo, Material mater
 	glm::vec3 lightVectorNormalized = normalize(lightVector);
 	glm::vec3 intensity = light->computeLightContribution(closestObjectInfo.intersectionPoint);
 	shaders = { 0,0,0 };
+
 	glm::vec3 blinnPhongShade = blinnPhongShading(lightVectorNormalized, cameraVectorNormalized, material, intensity, closestObjectInfo.hitNormal);
 	glm::vec3 diffuseShade = diffuseShading(lightVectorNormalized, material, intensity, closestObjectInfo.hitNormal);
-	shaders = diffuseShade + blinnPhongShade;
+	shaders = diffuseShade +blinnPhongShade ;
 
 
 }
 glm::vec3 Shading::blinnPhongShading(glm::vec3 lightRayVector, glm::vec3& cameraRayVector, Material& material, glm::vec3& lightIntensity, glm::vec3& normal)const
 {
 
-	glm::vec3 halfVector = normalize(lightRayVector + cameraRayVector);
 	
-	float cosAlpha = glm::dot( halfVector,normalize(normal));
+	if (material.brdf.id != -1 )
+	{
+		if(material.brdf.brdfType == OriginalPhong)
+		{
+			float cosAlpha = glm::dot(lightRayVector, normal);
+			if (acos(cosAlpha) * 57.2957795 < 90&& cosAlpha>0)
+			{
+				glm::vec3 ref = glm::normalize( lightRayVector - normal * glm::dot(lightRayVector, normal) * glm::vec3(2));
+				float cosR = glm::dot(cameraRayVector, ref);
+				float phong = pow(cosR, material.brdf.exponent) / cosAlpha;
+		
+				glm::vec3 blinnPhongLight = lightIntensity * (material.specularRef) * phong;
+				return blinnPhongLight;
+			}
+			else
+			{
+				glm::vec3 blinnPhongLight = glm::vec3(0);
+				return blinnPhongLight;
+			}
+		}
+		else if (material.brdf.brdfType == ModifiedPhong)
+		{
+			float cosAlpha = glm::dot(lightRayVector, normal);
+			if (acos(cosAlpha) * 57.2957795 < 90 && cosAlpha > 0)
+			{
+				glm::vec3 ref = glm::normalize(lightRayVector - normal * glm::dot(lightRayVector, normal) * glm::vec3(2));
+				float cosR = glm::dot(cameraRayVector, ref);
+				float phong = pow(cosR, material.brdf.exponent);
 
+				glm::vec3 blinnPhongLight = lightIntensity * (material.specularRef) * phong;
+				
+				return blinnPhongLight;
+			}
+			else
+			{
+				glm::vec3 blinnPhongLight = glm::vec3(0);
+				return blinnPhongLight;
+			}
+		}
+		else if	(material.brdf.brdfType == NormalizedModifiedPhong)
+		{
+			glm::vec3 ref = glm::normalize(lightRayVector - normal * glm::dot(lightRayVector, normal) * glm::vec3(2));
+			float cosR = glm::dot(cameraRayVector, ref);
+			float phong = pow(cosR, material.brdf.exponent);
+			float exp = ((material.brdf.exponent + 2) / (2 * PI) * phong);
+			
+			glm::vec3 blinnPhongLight = lightIntensity * (material.specularRef) *exp;
+
+			return blinnPhongLight;
+		}
+		else if (material.brdf.brdfType == OriginalBlinnPhong)
+		{
+			glm::vec3 halfVector = normalize(lightRayVector + cameraRayVector);
+
+			float cosAlpha = glm::dot(lightRayVector, normalize(normal));
+			
+			float cosR = glm::dot(halfVector, normal);
+			float phong = pow(cosR, material.brdf.exponent) ;
+
+			glm::vec3 blinnPhongLight = lightIntensity * (material.specularRef) * phong;
+			return blinnPhongLight;
+		}
+		else if (material.brdf.brdfType == ModifiedBlinnPhong)
+		{
+			glm::vec3 halfVector = normalize(lightRayVector + cameraRayVector);
+
+		
+			float cosR = glm::dot(halfVector, normal);
+			float phong = pow(cosR, material.brdf.exponent) ;
+
+			glm::vec3 blinnPhongLight = lightIntensity * (material.specularRef) * phong;
+			return blinnPhongLight;
+		}
+		else if (material.brdf.brdfType == NormalizedModifiedBlinnPhong)
+		{
+
+			glm::vec3 ref = glm::normalize(lightRayVector - normal * glm::dot(lightRayVector, normal) * glm::vec3(2));
+			glm::vec3 halfVector = normalize(lightRayVector + cameraRayVector);
+			float cosR = glm::dot(halfVector, normal);
+			float phong = pow(cosR, material.brdf.exponent);
+			float exp = ((material.brdf.exponent + 8) / (8 * PI) * phong);
+
+			glm::vec3 blinnPhongLight = lightIntensity * (material.specularRef) * exp;
+
+			return blinnPhongLight;
+		}
+		else if (material.brdf.brdfType == TorranceSparrow)
+		{
+			float cosAlpha = glm::dot(lightRayVector, normal);
+			
+				glm::vec3 halfVector = normalize(lightRayVector + cameraRayVector);
+				float cosH = glm::dot(halfVector, normal);
+				float DAlpha = ((material.brdf.exponent + 2) / (2 * PI)) * pow(cosH, material.brdf.exponent);
+				float x = 2 * glm::dot(normal, halfVector) * glm::dot(normal, cameraRayVector);
+				float y = glm::dot(cameraRayVector, halfVector);
+				float z = 2 * glm::dot(normal, halfVector) * glm::dot(normal, lightRayVector);
+				float a = min(x / y, z / y);
+				float G = min(1.0f, a);
+				float cosPhi = glm::dot(normal, cameraRayVector);
+				float cosTheta = glm::dot(normal, lightRayVector);
+				float cosBeta = glm::dot(halfVector, cameraRayVector);
+				float n = material.refractionIndex;
+				float R_0 = fresnel(lightRayVector, normal, n, material, 1);
+				float FBeta = R_0 + (1 - R_0) * pow((1 - cosBeta), 5);
+				float den =1/( 4 * cosTheta * cosPhi);
+				glm::vec3 blinnPhongLight = lightIntensity * (material.specularRef) * DAlpha * FBeta * G * den;
+				return blinnPhongLight;
+			
+		}
+
+	}
+	glm::vec3 halfVector = normalize(lightRayVector + cameraRayVector);
+
+	float cosAlpha = glm::dot(halfVector, normalize(normal));
 	if (cosAlpha < 0) cosAlpha = 0;
 	float phong = pow(cosAlpha, material.phongExp);
 	glm::vec3 blinnPhongLight = glm::vec3(lightIntensity.x * material.specularRef.x*phong, lightIntensity.y * material.specularRef.y * phong, lightIntensity.z * material.specularRef.z * phong);
@@ -526,7 +645,7 @@ glm::vec3 Shading::refract(const glm::vec3& incoming, const glm::vec3& normal, c
 	//return k < 0 ? glm::vec3{ 0,0,0 } : (incoming+n*cosi)*eta- n*sqrt(1-eta*eta*(1-cosi*cosi));
 	return k < 0 ? glm::vec3{ 0,0,0 } : incoming * eta + n * (eta * cosi - sqrtf(k));
 }
-float Shading::fresnel(const glm::vec3& incoming, const glm::vec3& normal, const float& refractionIndex, Material material, float n_i)
+float Shading::fresnel(const glm::vec3& incoming, const glm::vec3& normal, const float& refractionIndex, Material material, float n_i)const
 {
 	float kr = 0;
 
