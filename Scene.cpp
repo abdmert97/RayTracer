@@ -881,7 +881,7 @@ void Scene::readMeshes(const char*& str, XMLError& eResult, XMLElement*& pElemen
 		eResult =objElement->QueryIntAttribute("textureOffset", &textureOffset);
 	
 		const char* type = objElement->Attribute("plyFile");
-		cout<< type<< endl;
+
 		if (type != nullptr )
 		{
 
